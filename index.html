@@ -3,25 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inside a Fitness Watch — Engineering &amp; Physics</title>
-    <!-- Three.js from CDN for 3D Interactive Exploded View -->
+    <title>Inside a Fitness Watch — How Steps &amp; Heart Rate Work</title>
+    <!-- Three.js + GLTFLoader + OrbitControls from CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
         /* ============================================================
-           MONOCHROME MINIMALIST BASE & RESET
+           CLEAN MINIMAL LIGHT AESTHETIC (APPLE / SWISS DESIGN)
            ============================================================ */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --bg: #000000;
-            --surface: #0a0a0a;
-            --surface-2: #141414;
-            --border: #222222;
-            --border-focus: #444444;
-            --text-primary: #ffffff;
-            --text-secondary: #888888;
-            --text-tertiary: #555555;
-            --accent: #ffffff;
-            --highlight: #00ff88;
+            --bg: #ffffff;
+            --surface-bg: #f5f5f7;
+            --card-bg: #ffffff;
+            --border: #d2d2d7;
+            --border-light: #e5e5ea;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-muted: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #00875a;
+            --accent-dark: #111111;
         }
 
         html {
@@ -33,48 +36,49 @@
         }
 
         body {
-            overflow-x: hidden;
             background: var(--bg);
+            overflow-x: hidden;
+            line-height: 1.5;
         }
 
-        /* Top Minimal Navigation Bar */
+        /* Fixed Navigation */
         #navbar {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 60px;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border);
+            height: 56px;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-light);
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 32px;
             z-index: 1000;
         }
-        .nav-logo {
+        .nav-brand {
             font-size: 13px;
             font-weight: 700;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
             color: var(--text-primary);
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        .nav-logo::before {
+        .nav-brand::before {
             content: '';
-            display: inline-block;
             width: 8px;
             height: 8px;
-            background: #fff;
+            background: #111;
             border-radius: 50%;
+            display: inline-block;
         }
         .nav-links {
             display: flex;
-            gap: 28px;
+            gap: 24px;
             list-style: none;
         }
         .nav-links a {
@@ -82,102 +86,101 @@
             text-decoration: none;
             font-size: 12px;
             font-weight: 500;
-            letter-spacing: 1px;
-            text-transform: uppercase;
+            letter-spacing: 0.5px;
             transition: color 0.2s;
         }
         .nav-links a:hover {
             color: var(--text-primary);
         }
 
-        /* Hero Section with 3D Exploded View */
-        #hero {
-            position: relative;
-            min-height: 100vh;
-            padding-top: 80px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
+        /* Container Layout */
+        .container {
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 0 24px;
         }
-        .hero-header {
+
+        /* ============================================================
+           HERO SECTION: 3D MODEL & EXPLODED VIEW
+           ============================================================ */
+        #hero {
+            padding-top: 100px;
+            padding-bottom: 60px;
             text-align: center;
-            padding: 40px 20px 10px;
-            max-width: 900px;
+            background: linear-gradient(180deg, #ffffff 0%, #fbfbfd 100%);
         }
         .hero-tag {
-            font-size: 11px;
-            letter-spacing: 3px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 2.5px;
             text-transform: uppercase;
-            color: var(--text-tertiary);
-            margin-bottom: 16px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
         }
         .hero-title {
-            font-size: clamp(34px, 5.5vw, 68px);
+            font-size: clamp(34px, 5.5vw, 64px);
             font-weight: 800;
             letter-spacing: -1.5px;
             line-height: 1.05;
-            margin-bottom: 18px;
-            text-transform: uppercase;
+            color: var(--text-primary);
+            margin-bottom: 16px;
         }
         .hero-desc {
-            font-size: clamp(14px, 1.8vw, 17px);
+            font-size: clamp(15px, 1.8vw, 18px);
             color: var(--text-secondary);
-            max-width: 620px;
-            margin: 0 auto 24px;
+            max-width: 680px;
+            margin: 0 auto 30px;
             line-height: 1.6;
         }
 
-        /* 3D View Container */
-        #viewport-3d-wrap {
+        /* 3D Viewer Container */
+        .viewer-3d-box {
             position: relative;
             width: 100%;
-            max-width: 1100px;
-            height: 520px;
-            margin: 10px auto 40px;
+            height: 480px;
+            background: radial-gradient(circle at center, #ffffff 0%, #f2f2f7 80%, #e5e5ea 100%);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            background: radial-gradient(circle at center, #111111 0%, #050505 70%, #000000 100%);
+            border-radius: 20px;
             overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.05);
         }
-        #webgl-canvas {
+        #three-canvas {
             width: 100%;
             height: 100%;
             display: block;
             cursor: grab;
         }
-        #webgl-canvas:active {
-            cursor: grabbing;
-        }
+        #three-canvas:active { cursor: grabbing; }
 
-        /* 3D Interactive Controls Overlay */
-        .controls-overlay {
+        .viewer-controls {
             position: absolute;
-            bottom: 24px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(10, 10, 10, 0.85);
+            background: rgba(255, 255, 255, 0.9);
             border: 1px solid var(--border);
-            padding: 12px 24px;
+            padding: 10px 22px;
             border-radius: 30px;
-            backdrop-filter: blur(10px);
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(10px);
             z-index: 10;
         }
-        .controls-overlay label {
+        .viewer-controls label {
             font-size: 11px;
-            letter-spacing: 1.5px;
+            font-weight: 700;
+            letter-spacing: 1px;
             text-transform: uppercase;
             color: var(--text-secondary);
-            font-weight: 600;
         }
         .slider-explode {
             -webkit-appearance: none;
-            width: 180px;
+            width: 160px;
             height: 4px;
-            background: #222;
+            background: #d2d2d7;
             border-radius: 2px;
             outline: none;
         }
@@ -186,277 +189,316 @@
             width: 16px;
             height: 16px;
             border-radius: 50%;
-            background: #fff;
+            background: #111;
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(255,255,255,0.4);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
-
-        .layer-callouts {
+        .viewer-tip {
             position: absolute;
-            top: 24px;
-            left: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            top: 18px;
+            right: 20px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
             pointer-events: none;
         }
-        .callout-badge {
-            font-size: 11px;
-            font-family: monospace;
-            padding: 4px 10px;
-            background: rgba(20, 20, 20, 0.7);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            color: var(--text-secondary);
-            display: inline-block;
-        }
-        .callout-badge.active {
-            border-color: #fff;
-            color: #fff;
-        }
 
-        /* Quick Jump Buttons below Hero */
-        .hero-jumps {
+        .hero-action-buttons {
             display: flex;
+            justify-content: center;
             gap: 16px;
-            margin-bottom: 60px;
         }
-        .btn-jump {
-            padding: 12px 28px;
-            border-radius: 30px;
-            font-size: 12px;
+        .btn-nav-jump {
+            padding: 12px 26px;
+            border-radius: 24px;
+            font-size: 13px;
             font-weight: 600;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
+            letter-spacing: 0.5px;
             text-decoration: none;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
-        .btn-primary {
-            background: #ffffff;
-            color: #000000;
-            border: 1px solid #ffffff;
+        .btn-jump-dark {
+            background: #111111;
+            color: #ffffff;
+            border: 1px solid #111111;
         }
-        .btn-primary:hover {
-            background: #e0e0e0;
+        .btn-jump-dark:hover {
+            background: #333333;
             transform: translateY(-2px);
         }
-        .btn-outline {
-            background: transparent;
-            color: #ffffff;
+        .btn-jump-light {
+            background: #ffffff;
+            color: #111111;
             border: 1px solid var(--border);
         }
-        .btn-outline:hover {
-            border-color: #ffffff;
+        .btn-jump-light:hover {
+            border-color: #111;
             transform: translateY(-2px);
         }
 
-        /* Main Content Container */
-        .content-container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 0 20px;
+        /* ============================================================
+           SECTION CARDS (ALL-IN-ONE STUDIOS)
+           ============================================================ */
+        .section-block {
+            padding: 70px 0;
+            border-top: 1px solid var(--border-light);
         }
-
-        /* Section divider */
-        .section-separator {
-            width: 100%;
-            height: 1px;
-            background: linear-gradient(90deg, transparent 0%, var(--border) 50%, transparent 100%);
-            margin: 60px 0;
-        }
-
-        /* Section Header */
         .section-header {
-            margin-bottom: 36px;
+            margin-bottom: 28px;
         }
-        .section-num {
-            font-size: 12px;
+        .section-badge {
+            font-size: 11px;
+            font-weight: 700;
             font-family: monospace;
-            letter-spacing: 3px;
-            color: var(--text-tertiary);
+            letter-spacing: 2px;
+            color: var(--text-muted);
             text-transform: uppercase;
             display: block;
+            margin-bottom: 8px;
+        }
+        .section-heading {
+            font-size: clamp(26px, 3.8vw, 38px);
+            font-weight: 800;
+            letter-spacing: -0.8px;
             margin-bottom: 10px;
         }
-        .section-title {
-            font-size: clamp(26px, 3.8vw, 42px);
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            text-transform: uppercase;
-            margin-bottom: 12px;
-        }
-        .section-subtitle {
+        .section-subheading {
             font-size: 16px;
             color: var(--text-secondary);
-            max-width: 720px;
+            max-width: 780px;
             line-height: 1.6;
         }
 
-        /* Interactive Canvas Visualizer Box */
-        .visualizer-card {
-            background: var(--surface);
+        /* Unified Studio Card */
+        .studio-card {
+            background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 16px;
+            border-radius: 20px;
             overflow: hidden;
-            margin-bottom: 90px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
         }
 
-        .visualizer-header {
+        /* Top Bar of Studio */
+        .studio-toolbar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px 24px;
-            border-bottom: 1px solid var(--border);
-            background: #0d0d0d;
+            padding: 14px 24px;
+            background: #fafafc;
+            border-bottom: 1px solid var(--border-light);
+            flex-wrap: wrap;
+            gap: 12px;
         }
-        .visualizer-title {
-            font-size: 13px;
-            font-weight: 600;
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .toolbar-label {
+            font-size: 11px;
+            font-weight: 700;
             letter-spacing: 1px;
             text-transform: uppercase;
-            color: #ffffff;
-        }
-        .visualizer-counter {
-            font-family: monospace;
-            font-size: 12px;
-            color: var(--text-tertiary);
+            color: var(--text-muted);
+            margin-right: 4px;
         }
 
-        .canvas-container {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 16 / 9;
-            background: #000000;
-            max-height: 520px;
+        .btn-mode {
+            padding: 6px 14px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: #ffffff;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .canvas-container canvas {
+        .btn-mode:hover {
+            border-color: #111;
+            color: #111;
+        }
+        .btn-mode.active {
+            background: #111111;
+            color: #ffffff;
+            border-color: #111111;
+        }
+
+        .btn-toggle-explode {
+            padding: 6px 14px;
+            border-radius: 16px;
+            border: 1px solid #111;
+            background: #ffffff;
+            color: #111;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-toggle-explode:hover {
+            background: #111;
+            color: #fff;
+        }
+        .btn-toggle-explode.active {
+            background: #111;
+            color: #fff;
+        }
+
+        /* Dual-Pane Studio Body */
+        .studio-body {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            min-height: 500px;
+        }
+
+        /* Left Canvas View */
+        .studio-canvas-wrap {
+            position: relative;
+            background: #ffffff;
+            border-right: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .studio-canvas-wrap canvas {
             width: 100%;
             height: 100%;
             display: block;
         }
 
-        /* Visualizer scene description text */
-        .scene-details {
-            padding: 24px 32px;
-            border-top: 1px solid var(--border);
-            background: #080808;
-            min-height: 120px;
-        }
-        .scene-name {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            letter-spacing: -0.2px;
-        }
-        .scene-text {
-            font-size: 14px;
-            color: var(--text-secondary);
-            line-height: 1.6;
-            max-width: 800px;
+        /* Right Telemetry Sidebar */
+        .studio-sidebar {
+            background: #fafafc;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
-        /* Controls Bar */
-        .visualizer-footer {
+        .telemetry-block {
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .telemetry-title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 18px 32px;
-            background: #0b0b0b;
-            border-top: 1px solid var(--border);
         }
-        .btn-step {
-            padding: 8px 20px;
-            border-radius: 6px;
-            background: #181818;
-            border: 1px solid var(--border);
-            color: #ffffff;
+
+        /* Step Counter Digital Box */
+        .digital-readout {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', monospace;
+            font-size: 38px;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1;
+            margin: 6px 0;
+            letter-spacing: -1px;
+        }
+        .digital-sub {
             font-size: 12px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-step:hover:not(:disabled) {
-            background: #252525;
-            border-color: #555;
-        }
-        .btn-step:disabled {
-            opacity: 0.25;
-            cursor: not-allowed;
-        }
-
-        .step-pills {
-            display: flex;
-            gap: 8px;
-        }
-        .step-pill {
-            width: 24px;
-            height: 4px;
-            background: #222222;
-            border-radius: 2px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .step-pill.active {
-            background: #ffffff;
-            width: 36px;
-        }
-
-        /* Key Scientific Takeaway Box */
-        .takeaway-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 20px;
-            margin: 24px 0 60px;
-        }
-        .takeaway-item {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-        }
-        .takeaway-icon {
-            font-size: 20px;
-            font-family: monospace;
-            color: #fff;
-            margin-bottom: 12px;
-            display: block;
-        }
-        .takeaway-item h4 {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-            color: #fff;
-        }
-        .takeaway-item p {
-            font-size: 13px;
             color: var(--text-secondary);
+        }
+
+        /* Wave Mini Canvas */
+        .mini-wave-canvas {
+            width: 100%;
+            height: 90px;
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            display: block;
+            margin-top: 8px;
+        }
+
+        /* 3 Steps Explainer List */
+        .summary-steps {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .summary-step {
+            display: flex;
+            gap: 10px;
+            font-size: 12px;
             line-height: 1.5;
+            color: var(--text-secondary);
+        }
+        .step-num {
+            font-weight: 800;
+            font-family: monospace;
+            color: var(--text-primary);
+            background: #e5e5ea;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 11px;
+        }
+        .step-text strong {
+            color: var(--text-primary);
+        }
+
+        /* Filtered Gesture Warning Badge */
+        .badge-warning {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            background: #fff0f0;
+            color: #d70015;
+            border: 1px solid #ffccd0;
+        }
+        .badge-success {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            background: #eefcf3;
+            color: #00875a;
+            border: 1px solid #b7f0c9;
         }
 
         /* Footer */
         footer {
-            border-top: 1px solid var(--border);
+            border-top: 1px solid var(--border-light);
             padding: 40px 20px;
             text-align: center;
-            color: var(--text-tertiary);
+            color: var(--text-muted);
             font-size: 12px;
-            letter-spacing: 1px;
+            background: #ffffff;
         }
 
-        @media (max-width: 768px) {
-            #navbar { padding: 0 16px; }
+        @media (max-width: 900px) {
+            .studio-body { grid-template-columns: 1fr; }
+            .studio-canvas-wrap { border-right: none; border-bottom: 1px solid var(--border-light); height: 380px; }
             .nav-links { display: none; }
-            #viewport-3d-wrap { height: 380px; }
-            .hero-jumps { flex-direction: column; width: 100%; max-width: 300px; }
-            .btn-jump { justify-content: center; }
-            .visualizer-footer { padding: 14px 18px; }
-            .scene-details { padding: 18px 20px; }
         }
     </style>
 </head>
@@ -464,154 +506,203 @@
 
     <!-- Minimal Fixed Header -->
     <nav id="navbar">
-        <div class="nav-logo">GVH Fitness Watch</div>
+        <div class="nav-brand">Inside a Fitness Watch</div>
         <ul class="nav-links">
-            <li><a href="#hero">Exploded 3D</a></li>
-            <li><a href="#sec-accel">Accelerometer</a></li>
-            <li><a href="#sec-ppg">Optical PPG</a></li>
-            <li><a href="#takeaways">Scientific Principles</a></li>
+            <li><a href="#hero">3D Watch</a></li>
+            <li><a href="#sec-accel">Accelerometer Studio</a></li>
+            <li><a href="#sec-ppg">PPG Heart Rate Studio</a></li>
         </ul>
     </nav>
 
-    <!-- SECTION 0: HERO & 3D EXPLODED VIEW -->
+    <!-- SECTION 0: HERO & REAL 3D FITNESS WATCH -->
     <header id="hero">
-        <div class="hero-header">
-            <div class="hero-tag">Engineering Anatomy — Interactive Walkthrough</div>
-            <h1 class="hero-title">Inside a Fitness Watch</h1>
-            <p class="hero-desc">How everyday wrist-worn devices turn subtle mechanical inertia and microscopic changes in light reflection into accurate step counts and heart-rate telemetry.</p>
-        </div>
+        <div class="container">
+            <div class="hero-tag">Biometric Engineering Anatomy</div>
+            <h1 class="hero-title">How Everyday Smartwatches<br>Read Your Body</h1>
+            <p class="hero-desc">Discover the physical mechanisms behind step counting (MEMS accelerometer) and heart rate tracking (optical PPG reflection) — designed to be understood in under 2 minutes.</p>
 
-        <!-- 3D Exploded View Canvas Container -->
-        <div id="viewport-3d-wrap">
-            <canvas id="webgl-canvas"></canvas>
+            <!-- 3D Interactive Model Canvas -->
+            <div class="viewer-3d-box">
+                <canvas id="three-canvas"></canvas>
 
-            <div class="layer-callouts">
-                <span class="callout-badge" id="badge-glass">01. Sapphire Protective Crystal</span>
-                <span class="callout-badge" id="badge-display">02. High-Density AMOLED Screen</span>
-                <span class="callout-badge active" id="badge-mems">03. Logic Board &amp; MEMS Accelerometer</span>
-                <span class="callout-badge" id="badge-battery">04. Lithium-Polymer Power Cell</span>
-                <span class="callout-badge active" id="badge-ppg">05. Optical Heart-Rate Sensor (PPG)</span>
-                <span class="callout-badge" id="badge-case">06. Unibody Ceramic Housing &amp; Straps</span>
+                <div class="viewer-tip">Drag to rotate 360° | Scroll to zoom</div>
+
+                <div class="viewer-controls">
+                    <label for="explodeRange">Disassemble Watch</label>
+                    <input type="range" id="explodeRange" class="slider-explode" min="0" max="1" step="0.01" value="0.25">
+                    <span id="explodeValText" style="font-size: 11px; font-family: monospace; color: #6e6e73;">25%</span>
+                    <button id="btnReset3D" style="font-size: 11px; padding: 4px 10px; border-radius: 12px; border: 1px solid #d2d2d7; background: #fff; cursor: pointer;">Reset</button>
+                </div>
             </div>
 
-            <!-- Drag Slider for Manual Explode Expansion -->
-            <div class="controls-overlay">
-                <label for="explodeRange">Exploded View</label>
-                <input type="range" id="explodeRange" class="slider-explode" min="0" max="1" step="0.005" value="0.45">
-                <span style="font-family: monospace; font-size: 11px; color:#888;" id="explodeValue">45%</span>
+            <div class="hero-action-buttons">
+                <a href="#sec-accel" class="btn-nav-jump btn-jump-dark">Explore Accelerometer ↓</a>
+                <a href="#sec-ppg" class="btn-nav-jump btn-jump-light">Explore Heart Rate (PPG) ↓</a>
             </div>
-        </div>
-
-        <div class="hero-jumps">
-            <a href="#sec-accel" class="btn-jump btn-primary">01. Accelerometer (Steps) ↓</a>
-            <a href="#sec-ppg" class="btn-jump btn-outline">02. Optical PPG (Pulse) ↓</a>
         </div>
     </header>
 
-    <div class="content-container">
+    <div class="container">
 
         <!-- ========================================================
-             SECTION 1: ACCELEROMETER (STEP COUNTING)
+             SECTION 1: THE ACCELEROMETER STUDIO (ALL-IN-ONE)
              ======================================================== -->
-        <div class="section-separator"></div>
-
-        <section id="sec-accel">
+        <section id="sec-accel" class="section-block">
             <div class="section-header">
-                <span class="section-num">Feature 01 / Movement Telemetry</span>
-                <h2 class="section-title">The MEMS Accelerometer</h2>
-                <p class="section-subtitle">A fitness watch does not look at your legs or touch the ground. It measures the physical inertia of a microscopic proof mass suspended on silicon springs inside a microchip.</p>
+                <span class="section-badge">Feature 01 / Movement Telemetry</span>
+                <h2 class="section-heading">The MEMS Accelerometer</h2>
+                <p class="section-subheading">A fitness watch never looks at your legs. It measures the physical inertia of a microscopic proof mass suspended on silicon springs inside a microchip.</p>
             </div>
 
-            <div class="visualizer-card">
-                <div class="visualizer-header">
-                    <span class="visualizer-title" id="accel-step-title">Scene 1 — Movement Begins</span>
-                    <span class="visualizer-counter" id="accel-indicator">1 / 5</span>
+            <div class="studio-card">
+                <!-- Toolbar with Mode Switchers and Explode Toggle -->
+                <div class="studio-toolbar">
+                    <div class="toolbar-group">
+                        <span class="toolbar-label">Motion Simulation:</span>
+                        <button class="btn-mode active" onclick="setAccelMode('walk')">🚶 Walking (1.8 Hz)</button>
+                        <button class="btn-mode" onclick="setAccelMode('run')">🏃 Running (3.0 Hz)</button>
+                        <button class="btn-mode" onclick="setAccelMode('gesture')">✋ Hand Gesture (Noise)</button>
+                        <button class="btn-mode" onclick="setAccelMode('idle')">⏹ Idle / Still</button>
+                    </div>
+
+                    <div class="toolbar-group">
+                        <button class="btn-toggle-explode" id="btnExplodeMEMS" onclick="toggleMEMSExplode()">🔍 Disassemble MEMS Chip</button>
+                    </div>
                 </div>
 
-                <div class="canvas-container">
-                    <canvas id="canvas-accel" width="800" height="450"></canvas>
-                </div>
+                <!-- Unified Visualizer Body -->
+                <div class="studio-body">
+                    <!-- Left: Interactive Physical MEMS Simulation Canvas -->
+                    <div class="studio-canvas-wrap">
+                        <canvas id="canvas-accel" width="760" height="500"></canvas>
+                    </div>
 
-                <div class="scene-details">
-                    <h3 class="scene-name" id="accel-scene-name">Scene 1 — Movement Begins</h3>
-                    <p class="scene-text" id="accel-scene-desc">When a user walks, the wrist swings through space. The watch moves with the arm, transferring force directly to the internal MEMS accelerometer chip.</p>
-                </div>
+                    <!-- Right: Live Telemetry & Algorithm Sidebar -->
+                    <div class="studio-sidebar">
+                        <!-- Step Counter Readout -->
+                        <div class="telemetry-block">
+                            <div class="telemetry-title">
+                                <span>Real-Time Step Register</span>
+                                <span id="accel-status-badge" class="badge-success">GAIT DETECTED</span>
+                            </div>
+                            <div class="digital-readout" id="stepCounterDisplay">00,142</div>
+                            <div class="digital-sub" id="accelCadenceText">Cadence: ~110 steps/min</div>
+                        </div>
 
-                <div class="visualizer-footer">
-                    <button class="btn-step" id="accel-prev" onclick="stepAccel(-1)">← Previous</button>
-                    <div class="step-pills" id="accel-pills"></div>
-                    <button class="btn-step" id="accel-next" onclick="stepAccel(1)">Next →</button>
+                        <!-- 3-Axis & Magnitude Waveforms -->
+                        <div class="telemetry-block">
+                            <div class="telemetry-title">
+                                <span>Combined Acceleration Magnitude</span>
+                                <span style="font-family: monospace; font-size: 10px;">|a| = √(x²+y²+z²)</span>
+                            </div>
+                            <canvas id="mini-accel-wave" class="mini-wave-canvas" width="290" height="90"></canvas>
+                            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #86868b; margin-top: 4px;">
+                                <span>Threshold line: 0.75g</span>
+                                <span id="peakNotice">● Peak counted</span>
+                            </div>
+                        </div>
+
+                        <!-- 2-Minute Quick Takeaway -->
+                        <div class="telemetry-block">
+                            <div class="telemetry-title">How It Works in 3 Steps</div>
+                            <ul class="summary-steps">
+                                <li class="summary-step">
+                                    <span class="step-num">1</span>
+                                    <div class="step-text"><strong>Inertial Lag:</strong> When your wrist moves, the proof mass resists due to inertia ($F=ma$), compressing the springs.</div>
+                                </li>
+                                <li class="summary-step">
+                                    <span class="step-num">2</span>
+                                    <div class="step-text"><strong>Capacitance Shift:</strong> Shifting gaps between plates change electrical capacitance ($C = \varepsilon A / d$), generating voltage.</div>
+                                </li>
+                                <li class="summary-step">
+                                    <span class="step-num">3</span>
+                                    <div class="step-text"><strong>Rhythm Validation:</strong> The firmware algorithm verifies periodic peaks matching human gait, ignoring erratic movements.</div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
         <!-- ========================================================
-             SECTION 2: OPTICAL PPG (HEART RATE SENSOR)
+             SECTION 2: THE OPTICAL PPG STUDIO (ALL-IN-ONE)
              ======================================================== -->
-        <div class="section-separator"></div>
-
-        <section id="sec-ppg">
+        <section id="sec-ppg" class="section-block">
             <div class="section-header">
-                <span class="section-num">Feature 02 / Hemodynamic Sensing</span>
-                <h2 class="section-title">Optical Photoplethysmography (PPG)</h2>
-                <p class="section-subtitle">How green light and photodiode sensors inspect subcutaneous blood volume fluctuations during each cardiac contraction without puncturing the skin.</p>
+                <span class="section-badge">Feature 02 / Hemodynamic Sensing</span>
+                <h2 class="section-heading">Optical Photoplethysmography (PPG)</h2>
+                <p class="section-subheading">How green LEDs and a photodiode track blood volume fluctuations through tissue — and why green light reflection is the secret to measuring pulse.</p>
             </div>
 
-            <div class="visualizer-card">
-                <div class="visualizer-header">
-                    <span class="visualizer-title" id="ppg-step-title">Scene 1 — Optical Sensor Activation</span>
-                    <span class="visualizer-counter" id="ppg-indicator">1 / 7</span>
+            <div class="studio-card">
+                <!-- Toolbar for Heart Rate Controls -->
+                <div class="studio-toolbar">
+                    <div class="toolbar-group">
+                        <span class="toolbar-label">Heart Rate Simulation:</span>
+                        <button class="btn-mode" onclick="setBPM(60)">60 BPM (Resting)</button>
+                        <button class="btn-mode active" onclick="setBPM(75)">75 BPM (Normal)</button>
+                        <button class="btn-mode" onclick="setBPM(125)">125 BPM (Cardio)</button>
+                    </div>
+
+                    <div class="toolbar-group">
+                        <span style="font-size: 11px; font-weight: 600; color: #00875a;">● Optical Sensor Active (λ = 530 nm)</span>
+                    </div>
                 </div>
 
-                <div class="canvas-container">
-                    <canvas id="canvas-ppg" width="800" height="450"></canvas>
-                </div>
+                <!-- Unified Studio Body -->
+                <div class="studio-body">
+                    <!-- Left: Interactive Optical Cross-Section Canvas -->
+                    <div class="studio-canvas-wrap">
+                        <canvas id="canvas-ppg" width="760" height="500"></canvas>
+                    </div>
 
-                <div class="scene-details">
-                    <h3 class="scene-name" id="ppg-scene-name">Scene 1 — Optical Sensor Activation</h3>
-                    <p class="scene-text" id="ppg-scene-desc">Dual green LEDs on the rear case fire rhythmic light pulses into the dermis layer. A central photodiode measures the photons that scatter back to the surface.</p>
-                </div>
+                    <!-- Right: Live Cardiovascular Telemetry Sidebar -->
+                    <div class="studio-sidebar">
+                        <!-- BPM Digital Readout -->
+                        <div class="telemetry-block">
+                            <div class="telemetry-title">
+                                <span>Calculated Heart Rate</span>
+                                <span style="color: #ff3b30;">♥ PULSE ACTIVE</span>
+                            </div>
+                            <div class="digital-readout" id="bpmDisplay" style="color: #111;">
+                                75 <span style="font-size: 16px; font-weight: 600; color: #86868b;">BPM</span>
+                            </div>
+                            <div class="digital-sub" id="ppgDeltaTText">Cardiac period: Δt = 0.80 s</div>
+                        </div>
 
-                <div class="visualizer-footer">
-                    <button class="btn-step" id="ppg-prev" onclick="stepPPG(-1)">← Previous</button>
-                    <div class="step-pills" id="ppg-pills"></div>
-                    <button class="btn-step" id="ppg-next" onclick="stepPPG(1)">Next →</button>
-                </div>
-            </div>
-        </section>
+                        <!-- Real-time PPG Waveform Trace -->
+                        <div class="telemetry-block">
+                            <div class="telemetry-title">
+                                <span>Photoplethysmogram (PPG) Wave</span>
+                                <span style="font-family: monospace; font-size: 10px;">BPM = 60 / Δt</span>
+                            </div>
+                            <canvas id="mini-ppg-wave" class="mini-wave-canvas" width="290" height="90"></canvas>
+                            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #86868b; margin-top: 4px;">
+                                <span>Systolic Peak</span>
+                                <span>Dicrotic Notch</span>
+                            </div>
+                        </div>
 
-        <!-- ========================================================
-             SECTION 3: SCIENTIFIC PRINCIPLES & TAKEAWAYS
-             ======================================================== -->
-        <div class="section-separator"></div>
-
-        <section id="takeaways">
-            <div class="section-header">
-                <span class="section-num">Summary</span>
-                <h2 class="section-title">Scientific Principles at Work</h2>
-                <p class="section-subtitle">Core physics and engineering concepts that make non-invasive biometric tracking possible.</p>
-            </div>
-
-            <div class="takeaway-grid">
-                <div class="takeaway-item">
-                    <span class="takeaway-icon">[01]</span>
-                    <h4>Inertia &amp; Capacitance</h4>
-                    <p>Newton's first law causes the internal proof mass to resist sudden acceleration. This micro-deflection alters the distance $d$ between capacitor plates, changing electrical capacitance $C = \varepsilon A / d$.</p>
-                </div>
-                <div class="takeaway-item">
-                    <span class="takeaway-icon">[02]</span>
-                    <h4>3-Axis Peak Filtering</h4>
-                    <p>Raw acceleration vector magnitude $|a| = \sqrt{a_x^2 + a_y^2 + a_z^2}$ is evaluated against an adaptive threshold to discard noise, typing, and gestures, counting only rhythmic gait impacts.</p>
-                </div>
-                <div class="takeaway-item">
-                    <span class="takeaway-icon">[03]</span>
-                    <h4>Hemoglobin Light Absorption</h4>
-                    <p>Oxygenated blood has a peak absorption band in the green spectrum (~530 nm). During systolic expansion, extra blood absorbs more green photons, causing reflection dips detected by the photodiode.</p>
-                </div>
-                <div class="takeaway-item">
-                    <span class="takeaway-icon">[04]</span>
-                    <h4>Peak Interval Calculation</h4>
-                    <p>The time interval $\Delta t$ between consecutive PPG pulses provides the real-time cardiac period. The microprocessor computes frequency: $\text{BPM} = 60 / \Delta t$.</p>
+                        <!-- 2-Minute Quick Takeaway -->
+                        <div class="telemetry-block">
+                            <div class="telemetry-title">How It Works in 3 Steps</div>
+                            <ul class="summary-steps">
+                                <li class="summary-step">
+                                    <span class="step-num">1</span>
+                                    <div class="step-text"><strong>Light Penetration:</strong> Dual green LEDs emit photons deep into cutaneous capillary beds.</div>
+                                </li>
+                                <li class="summary-step">
+                                    <span class="step-num">2</span>
+                                    <div class="step-text"><strong>Absorption vs. Reflection:</strong> In systole, blood surges $\implies$ hemoglobin absorbs more light $\implies$ <em>less light reflects back to photodiode</em>.</div>
+                                </li>
+                                <li class="summary-step">
+                                    <span class="step-num">3</span>
+                                    <div class="step-text"><strong>Frequency Calculation:</strong> The photodiode registers periodic light dips $\implies$ processor measures time between peaks ($\Delta t$) $\implies \text{BPM} = 60 / \Delta t$.</div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -619,267 +710,243 @@
     </div>
 
     <footer>
-        <p>GVH Hackathon Project — Interactive Exploded Architecture &amp; Biometric Sensing Walkthrough</p>
+        <p>GVH Hackathon Project — Interactive Hardware Architecture &amp; Biometric Sensing</p>
     </footer>
 
     <!-- ============================================================
-         SCRIPTS: THREE.JS 3D EXPLODED VIEW + CANVAS 2D ENGINES
+         SCRIPTS: THREE.JS 3D WATCH + ACCEL STUDIO + PPG STUDIO
          ============================================================ -->
     <script>
     /* ============================================================
-       PART 1: THREE.JS 3D EXPLODED VIEW OF FITNESS WATCH
+       1. THREE.JS 3D FITNESS WATCH WITH EXPLODED VIEW
        ============================================================ */
-    (function init3DExplodedView() {
-        const wrap = document.getElementById('viewport-3d-wrap');
-        const canvas = document.getElementById('webgl-canvas');
+    (function init3DHero() {
+        const canvas = document.getElementById('three-canvas');
+        const box = document.querySelector('.viewer-3d-box');
         const slider = document.getElementById('explodeRange');
-        const sliderVal = document.getElementById('explodeValue');
+        const sliderText = document.getElementById('explodeValText');
+        const btnReset = document.getElementById('btnReset3D');
 
-        if (!window.THREE) {
-            console.warn("Three.js not loaded, skipping 3D initialization");
-            return;
-        }
-
-        // Scene, Camera, Renderer
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(40, wrap.clientWidth / wrap.clientHeight, 0.1, 1000);
-        camera.position.set(0, 5, 14);
-        camera.lookAt(0, 0, 0);
+        scene.background = new THREE.Color(0xf5f5f7);
 
-        const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
-        renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+        const camera = new THREE.PerspectiveCamera(40, box.clientWidth / box.clientHeight, 0.1, 1000);
+        camera.position.set(0, 4, 11);
+
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+        renderer.setSize(box.clientWidth, box.clientHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        // Ambient & Directional Lights
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        // OrbitControls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxDistance = 25;
+        controls.minDistance = 4;
+
+        // Studio Lighting (Clean High-Key Light)
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
         scene.add(ambientLight);
 
-        const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.2);
-        dirLight1.position.set(10, 20, 15);
-        scene.add(dirLight1);
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        keyLight.position.set(8, 14, 10);
+        keyLight.castShadow = true;
+        scene.add(keyLight);
 
-        const dirLight2 = new THREE.DirectionalLight(0x888888, 0.8);
-        dirLight2.position.set(-10, -10, -10);
-        scene.add(dirLight2);
+        const fillLight = new THREE.DirectionalLight(0xe8e8ed, 0.8);
+        fillLight.position.set(-8, -6, -8);
+        scene.add(fillLight);
 
-        // Green LED sensor spot glow (rear)
-        const sensorGlow = new THREE.PointLight(0x00ff88, 1.5, 6);
-        sensorGlow.position.set(0, -2, 0);
-        scene.add(sensorGlow);
+        // Green sensor light underneath
+        const sensorLight = new THREE.PointLight(0x00ff88, 1.8, 8);
+        sensorLight.position.set(0, -1.8, 0);
+        scene.add(sensorLight);
 
-        // Group container for the entire watch
+        // Ground shadow plane
+        const shadowGeo = new THREE.PlaneGeometry(16, 16);
+        const shadowMat = new THREE.ShadowMaterial({ opacity: 0.12 });
+        const ground = new THREE.Mesh(shadowGeo, shadowMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = -3.5;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
         const watchGroup = new THREE.Group();
         scene.add(watchGroup);
 
-        // Materials (Monochrome & Technical)
-        const matGlass = new THREE.MeshPhysicalMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.35,
-            roughness: 0.1,
-            metalness: 0.1,
-            transmission: 0.9,
-            reflectivity: 0.9
+        const explodedMeshes = [];
+
+        // Load the 3D model (watch.glb)
+        const loader = new THREE.GLTFLoader();
+        loader.load('watch.glb', function(gltf) {
+            const model = gltf.scene;
+
+            // Center and scale model
+            const bBox = new THREE.Box3().setFromObject(model);
+            const center = bBox.getCenter(new THREE.Vector3());
+            const size = bBox.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 5.0 / maxDim;
+            model.scale.set(scale, scale, scale);
+            model.position.sub(center.multiplyScalar(scale));
+
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+
+                    // Classify part for exploded view
+                    let multiplier = 0;
+                    const name = (child.name || '').toLowerCase();
+                    if (name.includes('glass') || name.includes('03')) multiplier = 2.4;
+                    else if (name.includes('screen') || name.includes('element_big')) multiplier = 1.2;
+                    else if (name.includes('ele') || name.includes('small')) multiplier = 0.4;
+                    else if (name.includes('cylinder') || name.includes('button')) multiplier = -0.5;
+                    else if (name.includes('remen') || name.includes('strap')) multiplier = -1.6;
+                    else multiplier = -0.8;
+
+                    explodedMeshes.push({
+                        mesh: child,
+                        initialY: child.position.y,
+                        multiplier: multiplier
+                    });
+                }
+            });
+
+            watchGroup.add(model);
+            applyExplosion(parseFloat(slider.value));
+        }, undefined, function(err) {
+            console.warn("Could not load watch.glb, procedural fallback will be used:", err);
+            createProceduralWatch();
         });
-        const matBezel = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.2 });
-        const matScreen = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.4 });
-        const matPCB = new THREE.MeshStandardMaterial({ color: 0x1a221a, metalness: 0.4, roughness: 0.5 });
-        const matChip = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.2 });
-        const matGold = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.9, roughness: 0.2 });
-        const matBattery = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.7, roughness: 0.4 });
-        const matCase = new THREE.MeshStandardMaterial({ color: 0x151515, metalness: 0.8, roughness: 0.3 });
-        const matSensorRing = new THREE.MeshStandardMaterial({ color: 0x080808, roughness: 0.6 });
-        const matGreenLED = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
-        const matStrap = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.8 });
 
-        // Layer 1: Sapphire Front Crystal
-        const geoGlass = new THREE.CylinderGeometry(2.35, 2.35, 0.08, 48);
-        const meshGlass = new THREE.Mesh(geoGlass, matGlass);
+        // Fallback procedural exploded model if GLB fails
+        function createProceduralWatch() {
+            const matDarkMetal = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, metalness: 0.8, roughness: 0.2 });
+            const matScreen = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.1 });
+            const matGlass = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.4, roughness: 0.1, transmission: 0.9 });
+            const matBand = new THREE.MeshStandardMaterial({ color: 0x242426, roughness: 0.8 });
+            const matChip = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.9, roughness: 0.2 });
 
-        // Layer 2: AMOLED Display & Outer Ring
-        const groupDisplay = new THREE.Group();
-        const meshScreen = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 0.06, 48), matScreen);
-        const meshBezel = new THREE.Mesh(new THREE.TorusGeometry(2.3, 0.1, 16, 48), matBezel);
-        meshBezel.rotation.x = Math.PI / 2;
-        groupDisplay.add(meshScreen);
-        groupDisplay.add(meshBezel);
+            const gGlass = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, 0.08, 48), matGlass);
+            const gScreen = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 0.06, 48), matScreen);
+            const gChip = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.8), matChip);
+            const gBody = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.3, 0.5, 48), matDarkMetal);
+            const gBandTop = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.2, 3.5), matBand);
+            gBandTop.position.set(0, 0, 3.2);
 
-        // Layer 3: Logic Board & MEMS Accelerometer
-        const groupPCB = new THREE.Group();
-        const meshPCB = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.1, 0.05, 48), matPCB);
-        const meshMEMS = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.12, 0.7), matChip);
-        meshMEMS.position.set(0.6, 0.06, 0.3);
-        const meshPins = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.02, 0.75), matGold);
-        meshPins.position.set(0.6, 0.02, 0.3);
-        groupPCB.add(meshPCB);
-        groupPCB.add(meshMEMS);
-        groupPCB.add(meshPins);
+            [
+                { mesh: gGlass, initialY: 0, multiplier: 2.5 },
+                { mesh: gScreen, initialY: 0, multiplier: 1.4 },
+                { mesh: gChip, initialY: 0, multiplier: 0.5 },
+                { mesh: gBody, initialY: 0, multiplier: -0.6 },
+                { mesh: gBandTop, initialY: 0, multiplier: -1.8 }
+            ].forEach(item => {
+                explodedMeshes.push(item);
+                watchGroup.add(item.mesh);
+            });
+            applyExplosion(parseFloat(slider.value));
+        }
 
-        // Layer 4: Battery Cell
-        const meshBattery = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.25, 2.6), matBattery);
-
-        // Layer 5: Optical Sensor Plate (PPG Array)
-        const groupSensor = new THREE.Group();
-        const meshSensorPlate = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.08, 36), matSensorRing);
-        groupSensor.add(meshSensorPlate);
-        // 4 Green LEDs + 1 Central Photodiode
-        const ledPositions = [[-0.5, 0], [0.5, 0], [0, -0.5], [0, 0.5]];
-        ledPositions.forEach(([x, z]) => {
-            const led = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.1, 16), matGreenLED);
-            led.position.set(x, -0.04, z);
-            groupSensor.add(led);
-        });
-        const photodiode = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.1, 16), matChip);
-        photodiode.position.set(0, -0.04, 0);
-        groupSensor.add(photodiode);
-
-        // Layer 6: Lower Unibody Case & Straps
-        const groupCase = new THREE.Group();
-        const meshCase = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.3, 0.45, 48), matCase);
-        groupCase.add(meshCase);
-        // Silicone Straps (Top and Bottom)
-        const strapGeo = new THREE.BoxGeometry(1.8, 0.16, 3.8);
-        const meshStrapTop = new THREE.Mesh(strapGeo, matStrap);
-        meshStrapTop.position.set(0, 0, 3.2);
-        meshStrapTop.rotation.x = -0.15;
-        const meshStrapBottom = new THREE.Mesh(strapGeo, matStrap);
-        meshStrapBottom.position.set(0, 0, -3.2);
-        meshStrapBottom.rotation.x = 0.15;
-        groupCase.add(meshStrapTop);
-        groupCase.add(meshStrapBottom);
-
-        // Add all sub-assemblies to watch group
-        watchGroup.add(meshGlass);
-        watchGroup.add(groupDisplay);
-        watchGroup.add(groupPCB);
-        watchGroup.add(meshBattery);
-        watchGroup.add(groupSensor);
-        watchGroup.add(groupCase);
-
-        // Base resting positions for exploded configuration
-        // Positive Y goes upward, Negative Y goes downward
-        const layers = [
-            { obj: meshGlass,   baseY:  3.2 },
-            { obj: groupDisplay,baseY:  1.9 },
-            { obj: groupPCB,    baseY:  0.7 },
-            { obj: meshBattery, baseY: -0.4 },
-            { obj: groupSensor, baseY: -1.8 },
-            { obj: groupCase,   baseY: -3.0 }
-        ];
-
-        let explodeAmount = parseFloat(slider.value); // default ~0.45
-
-        function updateExplodedPositions() {
-            layers.forEach(item => {
-                item.obj.position.y = item.baseY * explodeAmount;
+        function applyExplosion(amount) {
+            explodedMeshes.forEach(item => {
+                item.mesh.position.y = item.initialY + item.multiplier * amount * 2.2;
             });
         }
-        updateExplodedPositions();
 
         slider.addEventListener('input', (e) => {
-            explodeAmount = parseFloat(e.target.value);
-            sliderVal.textContent = Math.round(explodeAmount * 100) + '%';
-            updateExplodedPositions();
+            const val = parseFloat(e.target.value);
+            sliderText.textContent = Math.round(val * 100) + '%';
+            applyExplosion(val);
         });
 
-        // Interactive Mouse/Touch Rotation
-        let isDragging = false;
-        let previousMouseX = 0;
-        let previousMouseY = 0;
-
-        canvas.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            previousMouseX = e.clientX;
-            previousMouseY = e.clientY;
-        });
-        window.addEventListener('mouseup', () => { isDragging = false; });
-        window.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const deltaX = e.clientX - previousMouseX;
-            const deltaY = e.clientY - previousMouseY;
-
-            watchGroup.rotation.y += deltaX * 0.008;
-            watchGroup.rotation.x += deltaY * 0.008;
-
-            previousMouseX = e.clientX;
-            previousMouseY = e.clientY;
+        btnReset.addEventListener('click', () => {
+            slider.value = 0.25;
+            sliderText.textContent = '25%';
+            applyExplosion(0.25);
+            camera.position.set(0, 4, 11);
+            controls.target.set(0, 0, 0);
         });
 
-        // Touch support
-        canvas.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                isDragging = true;
-                previousMouseX = e.touches[0].clientX;
-                previousMouseY = e.touches[0].clientY;
-            }
-        });
-        window.addEventListener('touchend', () => { isDragging = false; });
-        window.addEventListener('touchmove', (e) => {
-            if (!isDragging || e.touches.length !== 1) return;
-            const deltaX = e.touches[0].clientX - previousMouseX;
-            const deltaY = e.touches[0].clientY - previousMouseY;
-
-            watchGroup.rotation.y += deltaX * 0.008;
-            watchGroup.rotation.x += deltaY * 0.008;
-
-            previousMouseX = e.touches[0].clientX;
-            previousMouseY = e.touches[0].clientY;
-        });
-
-        // Subtle automatic rotation & render loop
+        // Animation Loop
         let clock = new THREE.Clock();
-        function render3D() {
-            requestAnimationFrame(render3D);
+        function animate() {
+            requestAnimationFrame(animate);
             const delta = clock.getDelta();
+            controls.update();
 
-            if (!isDragging) {
-                watchGroup.rotation.y += delta * 0.25;
+            // Subtle rotation if user isn't actively dragging
+            if (!controls.state || controls.state === -1) {
+                watchGroup.rotation.y += delta * 0.15;
             }
 
             // Pulse sensor light
-            sensorGlow.intensity = 1.0 + 0.8 * Math.sin(clock.getElapsedTime() * 5);
+            sensorLight.intensity = 1.2 + 0.8 * Math.sin(clock.getElapsedTime() * 5);
 
             renderer.render(scene, camera);
         }
-        render3D();
+        animate();
 
-        // Responsive resize
         window.addEventListener('resize', () => {
-            if (!wrap) return;
-            camera.aspect = wrap.clientWidth / wrap.clientHeight;
+            camera.aspect = box.clientWidth / box.clientHeight;
             camera.updateProjectionMatrix();
-            renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+            renderer.setSize(box.clientWidth, box.clientHeight);
         });
     })();
 
     /* ============================================================
-       PART 2: ACCELEROMETER VISUALIZER (MONOCHROME REFINED)
+       2. MEMS ACCELEROMETER STUDIO (PHYSICAL SIMULATION)
        ============================================================ */
-    const canvasAccel = document.getElementById('canvas-accel');
-    const ctxA = canvasAccel.getContext('2d');
-    const WA = 800, HA = 450;
-    let accelSceneIndex = 0;
+    const canvasA = document.getElementById('canvas-accel');
+    const ctxA = canvasA.getContext('2d');
+    const WA = 760, HA = 500;
 
-    const gX = new Array(180).fill(0);
-    const gY = new Array(180).fill(0);
-    const gZ = new Array(180).fill(0);
-    let stepCountLive = 0;
+    let accelMode = 'walk'; // 'walk' | 'run' | 'gesture' | 'idle'
+    let isMEMSExploded = false;
+    let stepCount = 142;
     let lastStepTime = 0;
+    const accelWaveBuffer = new Array(120).fill(0);
 
-    function rrectA(ctx, x, y, w, h, r) {
-        ctx.beginPath();
-        ctx.moveTo(x + r, y);
-        ctx.arcTo(x + w, y, x + w, y + h, r);
-        ctx.arcTo(x + w, y + h, x, y + h, r);
-        ctx.arcTo(x, y + h, x, y, r);
-        ctx.arcTo(x, y, x + w, y, r);
-        ctx.closePath();
+    function setAccelMode(mode) {
+        accelMode = mode;
+        document.querySelectorAll('#sec-accel .btn-mode').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+
+        const badge = document.getElementById('accel-status-badge');
+        const cadence = document.getElementById('accelCadenceText');
+
+        if (mode === 'walk') {
+            badge.className = 'badge-success';
+            badge.textContent = 'GAIT DETECTED';
+            cadence.textContent = 'Cadence: ~110 steps/min (1.8 Hz)';
+        } else if (mode === 'run') {
+            badge.className = 'badge-success';
+            badge.textContent = 'RUNNING GAIT';
+            cadence.textContent = 'Cadence: ~180 steps/min (3.0 Hz)';
+        } else if (mode === 'gesture') {
+            badge.className = 'badge-warning';
+            badge.textContent = 'FILTERED (NOISE)';
+            cadence.textContent = 'Cadence: Erratic (Ignored by Algorithm)';
+        } else {
+            badge.className = 'badge-warning';
+            badge.textContent = 'IDLE / REST';
+            cadence.textContent = 'Cadence: 0 steps/min';
+        }
     }
 
-    function drawSpringA(ctx, x1, y, x2, coils, amp) {
+    function toggleMEMSExplode() {
+        isMEMSExploded = !isMEMSExploded;
+        const btn = document.getElementById('btnExplodeMEMS');
+        btn.classList.toggle('active', isMEMSExploded);
+        btn.textContent = isMEMSExploded ? '✓ Assemble MEMS Chip' : '🔍 Disassemble MEMS Chip';
+    }
+
+    function drawSpring(ctx, x1, y, x2, coils, amp) {
         ctx.beginPath();
-        ctx.strokeStyle = '#888888';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#6e6e73';
+        ctx.lineWidth = 2.5;
         const totalW = x2 - x1;
         const lead = totalW * 0.08;
         const coilW = (totalW - 2 * lead) / (coils * 2);
@@ -892,715 +959,333 @@
         ctx.stroke();
     }
 
-    const accelScenesData = [
-        {
-            title: "Scene 1 — Movement Begins",
-            name: "Mechanical Arm Swing & Housing Displacement",
-            desc: "When a person walks, their arm naturally swings back and forth. The fitness watch follows this trajectory. Inside the sealed watch chassis sits a microscopic MEMS chip measuring acceleration relative to gravity and arm momentum.",
-            render(t) {
-                // Background grid lines
-                ctxA.strokeStyle = '#111'; ctxA.lineWidth = 1;
-                for (let x = 0; x < WA; x += 40) { ctxA.beginPath(); ctxA.moveTo(x, 0); ctxA.lineTo(x, HA); ctxA.stroke(); }
-                for (let y = 0; y < HA; y += 40) { ctxA.beginPath(); ctxA.moveTo(0, y); ctxA.lineTo(WA, y); ctxA.stroke(); }
-
-                // Ground line
-                ctxA.strokeStyle = '#333'; ctxA.lineWidth = 2;
-                ctxA.beginPath(); ctxA.moveTo(50, 360); ctxA.lineTo(750, 360); ctxA.stroke();
-
-                // Stick figure
-                const bounce = Math.sin(t * 5) * 5;
-                const armSwing = Math.sin(t * 5) * 26;
-                const legSwing = Math.sin(t * 5) * 30;
-                const cx = 220, cy = 220 + bounce;
-
-                ctxA.strokeStyle = '#ffffff'; ctxA.lineWidth = 3; ctxA.lineCap = 'round';
-                // Head
-                ctxA.beginPath(); ctxA.arc(cx, cy - 75, 16, 0, Math.PI * 2); ctxA.stroke();
-                // Torso
-                ctxA.beginPath(); ctxA.moveTo(cx, cy - 58); ctxA.lineTo(cx, cy); ctxA.stroke();
-                // Arms
-                ctxA.beginPath(); ctxA.moveTo(cx, cy - 46); ctxA.lineTo(cx - 28, cy - 16 - armSwing); ctxA.stroke();
-                const rax = cx + 28, ray = cy - 16 + armSwing;
-                ctxA.beginPath(); ctxA.moveTo(cx, cy - 46); ctxA.lineTo(rax, ray); ctxA.stroke();
-
-                // Watch on wrist (Highlighted)
-                ctxA.fillStyle = '#ffffff';
-                rrectA(ctxA, rax - 7, ray - 5, 14, 10, 2); ctxA.fill();
-
-                // Legs
-                ctxA.beginPath(); ctxA.moveTo(cx, cy); ctxA.lineTo(cx - legSwing, cy + 60); ctxA.lineTo(cx - legSwing + 8, cy + 130); ctxA.stroke();
-                ctxA.beginPath(); ctxA.moveTo(cx, cy); ctxA.lineTo(cx + legSwing, cy + 60); ctxA.lineTo(cx + legSwing + 8, cy + 130); ctxA.stroke();
-
-                // Inspection Callout
-                ctxA.strokeStyle = '#444'; ctxA.setLineDash([4, 4]);
-                ctxA.beginPath(); ctxA.moveTo(rax + 12, ray); ctxA.lineTo(460, 180); ctxA.stroke();
-                ctxA.setLineDash([]);
-
-                // Zoomed Watch Preview Box
-                const wx = 580, wy = 180;
-                ctxA.fillStyle = '#0a0a0a'; ctxA.strokeStyle = '#333'; ctxA.lineWidth = 1;
-                rrectA(ctxA, wx - 90, wy - 90, 180, 180, 12); ctxA.fill(); ctxA.stroke();
-
-                ctxA.fillStyle = '#ffffff'; ctxA.font = '11px monospace'; ctxA.textAlign = 'center';
-                ctxA.fillText('WRIST-WORN SENSOR', wx, wy - 60);
-
-                ctxA.fillStyle = '#141414'; ctxA.strokeStyle = '#555';
-                rrectA(ctxA, wx - 45, wy - 40, 90, 100, 10); ctxA.fill(); ctxA.stroke();
-
-                const stepDisp = Math.floor(t * 1.6) % 9999;
-                ctxA.fillStyle = '#ffffff'; ctxA.font = 'bold 24px monospace';
-                ctxA.fillText(stepDisp.toString().padStart(4, '0'), wx, wy + 16);
-                ctxA.fillStyle = '#888'; ctxA.font = '10px sans-serif';
-                ctxA.fillText('STEPS', wx, wy + 34);
-
-                ctxA.fillStyle = '#888'; ctxA.font = '12px monospace'; ctxA.textAlign = 'center';
-                ctxA.fillText('Each arm cycle transmits mechanical force to the MEMS crystal', WA / 2, 410);
-            }
-        },
-        {
-            title: "Scene 2 — Accelerometer Internal Structure",
-            name: "Micro-Electro-Mechanical System (MEMS) Architecture",
-            desc: "Inside the microchip is a silicon housing, flexible micro-springs, a central proof mass, and interlocking comb fingers acting as differential capacitors. Fixed plates remain bonded to the chip, while moving plates displace with the mass.",
-            render(t) {
-                const hx = 160, hy = 70, hw = 480, hh = 260;
-                ctxA.strokeStyle = '#333'; ctxA.lineWidth = 2; ctxA.strokeRect(hx, hy, hw, hh);
-
-                ctxA.fillStyle = '#888'; ctxA.font = '11px monospace'; ctxA.textAlign = 'left';
-                ctxA.fillText('MEMS Silicon Substrate Housing', hx + 12, hy + 20);
-
-                const wobble = Math.sin(t * 2.5) * 8;
-                const mx = 330, my = 150, mw = 140, mh = 100;
-
-                // Central Proof Mass
-                ctxA.fillStyle = '#141414'; ctxA.strokeStyle = '#ffffff'; ctxA.lineWidth = 2;
-                rrectA(ctxA, mx + wobble, my, mw, mh, 4); ctxA.fill(); ctxA.stroke();
-                ctxA.fillStyle = '#ffffff'; ctxA.font = 'bold 12px monospace'; ctxA.textAlign = 'center';
-                ctxA.fillText('PROOF MASS (m)', mx + mw / 2 + wobble, my + mh / 2 + 4);
-
-                // Suspension Springs
-                drawSpringA(ctxA, hx + 20, my + mh / 2, mx + wobble, 6, 12);
-                drawSpringA(ctxA, mx + mw + wobble, my + mh / 2, hx + hw - 20, 6, 12);
-
-                // Fixed Capacitor Plates (Left & Right)
-                const pw = 8, ph = 60;
-                ctxA.fillStyle = '#444';
-                ctxA.fillRect(hx + 60, my + 20, pw, ph);
-                ctxA.fillRect(hx + hw - 60 - pw, my + 20, pw, ph);
-
-                // Movable Capacitor Plates (Attached to Proof Mass)
-                ctxA.fillStyle = '#ffffff';
-                ctxA.fillRect(mx + wobble - 14, my + 20, pw, ph);
-                ctxA.fillRect(mx + mw + wobble + 6, my + 20, pw, ph);
-
-                // Plate Distance Marker
-                const gap = (mx + wobble - 14) - (hx + 60 + pw);
-                ctxA.strokeStyle = '#888'; ctxA.lineWidth = 1;
-                ctxA.beginPath(); ctxA.moveTo(hx + 68, my + 50); ctxA.lineTo(mx + wobble - 14, my + 50); ctxA.stroke();
-                ctxA.fillStyle = '#888'; ctxA.font = '10px monospace'; ctxA.textAlign = 'center';
-                ctxA.fillText(`gap d = ${gap.toFixed(1)} μm`, (hx + 68 + mx + wobble - 14) / 2, my + 44);
-
-                // Formula Banner
-                ctxA.fillStyle = '#0f0f0f'; ctxA.strokeStyle = '#222';
-                rrectA(ctxA, 180, 360, 440, 50, 8); ctxA.fill(); ctxA.stroke();
-                ctxA.fillStyle = '#ffffff'; ctxA.font = '13px monospace'; ctxA.textAlign = 'center';
-                ctxA.fillText('Capacitance: C = (ε · A) / d', WA / 2, 384);
-                ctxA.fillStyle = '#888'; ctxA.font = '11px sans-serif';
-                ctxA.fillText('Decreasing gap d increases electrical capacitance C', WA / 2, 400);
-            }
-        },
-        {
-            title: "Scene 3 — Inertia in Action",
-            name: "Newton's First Law at the Microscale",
-            desc: "When your arm accelerates forward, the watch casing accelerates with it. However, the internal proof mass resists acceleration due to its own inertia ($F = ma$). The spring compresses, shifting the plate gap and producing a measurable capacitance shift $\\Delta C$.",
-            render(t) {
-                const shiftFrame = Math.sin(t * 3) * 60;
-                const shiftMass = Math.sin(t * 3 - 0.75) * 35; // Lags behind!
-
-                const hx = 180 + shiftFrame, hy = 90, hw = 440, hh = 200;
-                ctxA.strokeStyle = '#333'; ctxA.lineWidth = 1.5; ctxA.strokeRect(hx, hy, hw, hh);
-
-                // Accelerating chassis
-                ctxA.fillStyle = '#888'; ctxA.font = '11px monospace'; ctxA.textAlign = 'center';
-                ctxA.fillText('← External Frame Movement (Wrist) →', hx + hw / 2, hy - 14);
-
-                // Proof Mass
-                const mx = 330 + shiftMass, my = 140, mw = 140, mh = 90;
-                ctxA.fillStyle = '#111'; ctxA.strokeStyle = '#fff'; ctxA.lineWidth = 2;
-                rrectA(ctxA, mx, my, mw, mh, 4); ctxA.fill(); ctxA.stroke();
-                ctxA.fillStyle = '#fff'; ctxA.font = 'bold 12px monospace';
-                ctxA.fillText('INERTIAL LAG', mx + mw / 2, my + mh / 2);
-
-                // Springs
-                drawSpringA(ctxA, hx + 20, my + mh / 2, mx, 6, 12);
-                drawSpringA(ctxA, mx + mw, my + mh / 2, hx + hw - 20, 6, 12);
-
-                // Plates
-                ctxA.fillStyle = '#444';
-                ctxA.fillRect(hx + 50, my + 15, 8, 60);
-                ctxA.fillRect(hx + hw - 58, my + 15, 8, 60);
-
-                ctxA.fillStyle = '#fff';
-                ctxA.fillRect(mx - 12, my + 15, 8, 60);
-                ctxA.fillRect(mx + mw + 4, my + 15, 8, 60);
-
-                // Telemetry Bars
-                const diff = (shiftFrame - shiftMass);
-                const aVal = (diff * 0.15).toFixed(2);
-
-                ctxA.fillStyle = '#0d0d0d'; ctxA.strokeStyle = '#222';
-                rrectA(ctxA, 220, 320, 360, 70, 8); ctxA.fill(); ctxA.stroke();
-
-                ctxA.fillStyle = '#888'; ctxA.font = '11px monospace'; ctxA.textAlign = 'center';
-                ctxA.fillText('DYNAMIC ACCELERATION VECTOR', WA / 2, 344);
-                ctxA.fillStyle = '#ffffff'; ctxA.font = 'bold 22px monospace';
-                ctxA.fillText(`a = ${aVal} m/s²`, WA / 2, 372);
-            }
-        },
-        {
-            title: "Scene 4 — 3-Axis Signal Acquisition",
-            name: "Tri-Axial Data Streams (X, Y, Z)",
-            desc: "The accelerometer measures acceleration along three perpendicular axes in 3D space: X (lateral side-to-side), Y (longitudinal forward/back), and Z (vertical up/down). Walking generates distinct periodic waveforms across all three channels.",
-            render(t) {
-                // Update graph buffers
-                if (!this._lastT || t - this._lastT > 0.03) {
-                    this._lastT = t;
-                    gX.shift(); gX.push(Math.sin(t * 4.5) * 0.35 + (Math.random() - 0.5) * 0.05);
-                    gY.shift(); gY.push(Math.sin(t * 4.5 + 0.6) * 0.85 + (Math.random() - 0.5) * 0.07);
-                    gZ.shift(); gZ.push(Math.sin(t * 4.5 + 1.2) * 0.3 + (Math.random() - 0.5) * 0.05);
-                }
-
-                const gx = 100, gw = 640, gh = 85;
-
-                function drawTrace(x, y, data, label) {
-                    ctxA.fillStyle = '#080808'; ctxA.fillRect(x, y, gw, gh);
-                    ctxA.strokeStyle = '#1a1a1a'; ctxA.lineWidth = 1;
-                    ctxA.strokeRect(x, y, gw, gh);
-
-                    ctxA.strokeStyle = '#ffffff'; ctxA.lineWidth = 1.5;
-                    ctxA.beginPath();
-                    for (let i = 0; i < data.length; i++) {
-                        const px = x + (i / data.length) * gw;
-                        const py = y + gh / 2 - data[i] * (gh * 0.4);
-                        i === 0 ? ctxA.moveTo(px, py) : ctxA.lineTo(px, py);
-                    }
-                    ctxA.stroke();
-
-                    ctxA.fillStyle = '#888'; ctxA.font = '11px monospace'; ctxA.textAlign = 'left';
-                    ctxA.fillText(label, x + 8, y + 16);
-                }
-
-                drawTrace(gx, 50,  gX, 'ACCELERATION [X-AXIS]');
-                drawTrace(gx, 155, gY, 'ACCELERATION [Y-AXIS]');
-                drawTrace(gx, 260, gZ, 'ACCELERATION [Z-AXIS]');
-
-                ctxA.fillStyle = '#666'; ctxA.font = '11px monospace'; ctxA.textAlign = 'center';
-                ctxA.fillText('Time Progression (Continuous ADC Sampling @ 50 Hz) →', WA / 2, 385);
-            }
-        },
-        {
-            title: "Scene 5 — Step Recognition Algorithm",
-            name: "Peak Detection, Rhythm Filtering & Validation",
-            desc: "The firmware merges the tri-axial streams into a scalar magnitude $|a| = \\sqrt{a_x^2 + a_y^2 + a_z^2}$. When the wave crests above an adaptive threshold and matches normal human walking cadence (1.2–2.5 Hz), the step register increments.",
-            render(t) {
-                // Compute magnitude
-                const ax = Math.sin(t * 4.5) * 0.35;
-                const ay = Math.sin(t * 4.5 + 0.6) * 0.85;
-                const az = Math.sin(t * 4.5 + 1.2) * 0.3;
-                const mag = Math.sqrt(ax * ax + ay * ay + az * az) + (Math.random() - 0.5) * 0.04;
-
-                if (!this._lastT || t - this._lastT > 0.03) {
-                    this._lastT = t;
-                    gY.shift(); gY.push(mag);
-
-                    // Threshold peak detection
-                    if (mag > 0.75 && t - lastStepTime > 0.38) {
-                        lastStepTime = t;
-                        stepCountLive++;
-                    }
-                }
-
-                // Magnitude Graph
-                const gx = 60, gy = 60, gw = 480, gh = 200;
-                ctxA.fillStyle = '#080808'; ctxA.fillRect(gx, gy, gw, gh);
-                ctxA.strokeStyle = '#222'; ctxA.strokeRect(gx, gy, gw, gh);
-
-                // Threshold dotted line
-                const ty = gy + gh * 0.7 - 0.75 * gh * 0.55;
-                ctxA.strokeStyle = '#555'; ctxA.setLineDash([4, 4]);
-                ctxA.beginPath(); ctxA.moveTo(gx, ty); ctxA.lineTo(gx + gw, ty); ctxA.stroke();
-                ctxA.setLineDash([]);
-                ctxA.fillStyle = '#888'; ctxA.font = '10px monospace'; ctxA.textAlign = 'right';
-                ctxA.fillText('DECISION THRESHOLD', gx + gw - 8, ty - 6);
-
-                // Magnitude curve
-                ctxA.strokeStyle = '#ffffff'; ctxA.lineWidth = 2;
-                ctxA.beginPath();
-                for (let i = 0; i < gY.length; i++) {
-                    const px = gx + (i / gY.length) * gw;
-                    const py = gy + gh * 0.7 - gY[i] * gh * 0.55;
-                    i === 0 ? ctxA.moveTo(px, py) : ctxA.lineTo(px, py);
-                }
-                ctxA.stroke();
-
-                // Processor Register Box
-                const px = 570, py = 60, pw = 180, ph = 200;
-                ctxA.fillStyle = '#0e0e0e'; ctxA.strokeStyle = '#333';
-                rrectA(ctxA, px, py, pw, ph, 8); ctxA.fill(); ctxA.stroke();
-
-                ctxA.fillStyle = '#888'; ctxA.font = '11px monospace'; ctxA.textAlign = 'center';
-                ctxA.fillText('FIRMWARE PIPELINE', px + pw / 2, py + 26);
-
-                const alg = ['1. Magnitude calc', '2. Low-pass filter', '3. Peak detection', '4. Cadence verify', '5. Register increment'];
-                ctxA.font = '11px sans-serif'; ctxA.textAlign = 'left';
-                alg.forEach((s, idx) => {
-                    ctxA.fillStyle = idx === 4 ? '#ffffff' : '#666';
-                    ctxA.fillText(s, px + 16, py + 60 + idx * 24);
-                });
-
-                // Live Step Counter
-                ctxA.fillStyle = '#080808'; ctxA.strokeStyle = '#ffffff'; ctxA.lineWidth = 1;
-                rrectA(ctxA, 250, 300, 300, 90, 10); ctxA.fill(); ctxA.stroke();
-
-                ctxA.fillStyle = '#888'; ctxA.font = '11px monospace'; ctxA.textAlign = 'center';
-                ctxA.fillText('REGISTERED STEP COUNT', WA / 2, 328);
-                ctxA.fillStyle = '#ffffff'; ctxA.font = 'bold 36px monospace';
-                ctxA.fillText(stepCountLive.toString().padStart(5, '0'), WA / 2, 368);
-            }
-        }
-    ];
-
-    function updateAccelUI() {
-        const sc = accelScenesData[accelSceneIndex];
-        document.getElementById('accel-step-title').textContent = sc.title;
-        document.getElementById('accel-indicator').textContent = (accelSceneIndex + 1) + ' / ' + accelScenesData.length;
-        document.getElementById('accel-scene-name').textContent = sc.name;
-        document.getElementById('accel-scene-desc').textContent = sc.desc;
-        document.getElementById('accel-prev').disabled = (accelSceneIndex === 0);
-        document.getElementById('accel-next').disabled = (accelSceneIndex === accelScenesData.length - 1);
-
-        const pills = document.getElementById('accel-pills');
-        pills.innerHTML = '';
-        accelScenesData.forEach((_, idx) => {
-            const p = document.createElement('div');
-            p.className = 'step-pill' + (idx === accelSceneIndex ? ' active' : '');
-            p.onclick = () => { accelSceneIndex = idx; updateAccelUI(); };
-            pills.appendChild(p);
-        });
-    }
-
-    function stepAccel(dir) {
-        accelSceneIndex = Math.max(0, Math.min(accelScenesData.length - 1, accelSceneIndex + dir));
-        updateAccelUI();
-    }
-    updateAccelUI();
-
-    function renderAccel(time) {
-        ctxA.fillStyle = '#000000';
+    function renderAccelStudio(t) {
+        ctxA.fillStyle = '#ffffff';
         ctxA.fillRect(0, 0, WA, HA);
-        accelScenesData[accelSceneIndex].render(time);
+
+        // Technical Grid Background
+        ctxA.strokeStyle = '#f2f2f7'; ctxA.lineWidth = 1;
+        for (let x = 0; x < WA; x += 30) { ctxA.beginPath(); ctxA.moveTo(x, 0); ctxA.lineTo(x, HA); ctxA.stroke(); }
+        for (let y = 0; y < HA; y += 30) { ctxA.beginPath(); ctxA.moveTo(0, y); ctxA.lineTo(WA, y); ctxA.stroke(); }
+
+        // Motion physics parameters
+        let freq = 1.8;
+        let ampDrive = 45;
+        if (accelMode === 'run') { freq = 3.0; ampDrive = 60; }
+        else if (accelMode === 'gesture') { freq = 7.5; ampDrive = 35; }
+        else if (accelMode === 'idle') { freq = 0; ampDrive = 0; }
+
+        const frameShift = Math.sin(t * freq * Math.PI * 2) * ampDrive;
+        const massLag = Math.sin(t * freq * Math.PI * 2 - 0.7) * (ampDrive * 0.65);
+
+        // Explode separation offset
+        const expY = isMEMSExploded ? 65 : 0;
+
+        // --- SUBSTRATE HOUSING ---
+        const hx = 100 + frameShift, hy = 80 - expY, hw = 560, hh = 300 + expY * 2;
+        ctxA.fillStyle = '#f9f9fb'; ctxA.strokeStyle = '#d2d2d7'; ctxA.lineWidth = 2;
+        ctxA.beginPath(); ctxA.roundRect(hx, hy, hw, hh, 12); ctxA.fill(); ctxA.stroke();
+
+        ctxA.fillStyle = '#86868b'; ctxA.font = 'bold 11px monospace'; ctxA.textAlign = 'left';
+        ctxA.fillText('SILICON SUBSTRATE CHIP HOUSING (MOVES WITH WRIST)', hx + 16, hy + 24);
+
+        // --- SUSPENDED PROOF MASS ---
+        const mx = 310 + massLag, my = 180, mw = 140, mh = 100;
+        ctxA.fillStyle = '#1d1d1f'; ctxA.strokeStyle = '#000000'; ctxA.lineWidth = 2;
+        ctxA.beginPath(); ctxA.roundRect(mx, my, mw, mh, 8); ctxA.fill(); ctxA.stroke();
+
+        ctxA.fillStyle = '#ffffff'; ctxA.font = 'bold 13px sans-serif'; ctxA.textAlign = 'center';
+        ctxA.fillText('PROOF MASS (m)', mx + mw / 2, my + mh / 2 + 5);
+
+        // --- SUSPENSION SPRINGS ---
+        drawSpring(ctxA, hx + 30, my + mh / 2, mx, 6, 14);
+        drawSpring(ctxA, mx + mw, my + mh / 2, hx + hw - 30, 6, 14);
+
+        // --- DIFFERENTIAL CAPACITOR COMB PLATES ---
+        const plateW = 8, plateH = 70;
+        const leftFixedX = hx + 90;
+        const rightFixedX = hx + hw - 90 - plateW;
+
+        // Fixed Stator Plates (bonded to chip housing)
+        ctxA.fillStyle = '#8e8e93';
+        ctxA.fillRect(leftFixedX, my + 15, plateW, plateH);
+        ctxA.fillRect(rightFixedX, my + 15, plateW, plateH);
+
+        // Moving Rotor Plates (anchored to Proof Mass)
+        ctxA.fillStyle = '#0071e3';
+        const leftMovingX = mx - 16;
+        const rightMovingX = mx + mw + 8;
+        ctxA.fillRect(leftMovingX, my + 15, plateW, plateH);
+        ctxA.fillRect(rightMovingX, my + 15, plateW, plateH);
+
+        // Measure Gaps & Capacitance
+        const gap1 = Math.max(4, leftMovingX - (leftFixedX + plateW));
+        const gap2 = Math.max(4, rightFixedX - (rightMovingX + plateW));
+
+        // Gap dimension visualizer
+        ctxA.strokeStyle = '#0071e3'; ctxA.lineWidth = 1;
+        ctxA.beginPath(); ctxA.moveTo(leftFixedX + plateW, my + 50); ctxA.lineTo(leftMovingX, my + 50); ctxA.stroke();
+        ctxA.fillStyle = '#0071e3'; ctxA.font = '10px monospace'; ctxA.textAlign = 'center';
+        ctxA.fillText(`d1: ${gap1.toFixed(1)}μm`, (leftFixedX + plateW + leftMovingX) / 2, my + 44);
+
+        // If Exploded, show technical callout labels
+        if (isMEMSExploded) {
+            ctxA.fillStyle = '#d70015'; ctxA.font = '11px monospace'; ctxA.textAlign = 'center';
+            ctxA.fillText('↑ FIXED STATOR COMB PLATES', leftFixedX, hy + 40);
+            ctxA.fillText('RESTORE SPRING (k) →', hx + 80, my + mh / 2 - 25);
+            ctxA.fillText('← MOVING ROTOR COMB (ΔC)', leftMovingX, my + plateH + 35);
+            ctxA.fillText('ASIC DIFFERENTIAL AMPLIFIER (ΔV = k·ΔC) ↓', WA / 2, hy + hh - 15);
+        }
+
+        // Live Acceleration Value Banner
+        const accelVal = ((frameShift - massLag) * 0.18);
+        const mag = Math.abs(accelVal);
+
+        ctxA.fillStyle = '#ffffff'; ctxA.strokeStyle = '#e5e5ea'; ctxA.lineWidth = 1;
+        ctxA.beginPath(); ctxA.roundRect(140, 420, 480, 56, 12); ctxA.fill(); ctxA.stroke();
+
+        ctxA.fillStyle = '#1d1d1f'; ctxA.font = 'bold 15px monospace'; ctxA.textAlign = 'center';
+        ctxA.fillText(`Instantaneous Inertial Acceleration: ${accelVal.toFixed(2)} m/s²`, WA / 2, 444);
+
+        ctxA.fillStyle = '#6e6e73'; ctxA.font = '11px sans-serif';
+        ctxA.fillText('Proof mass displacement Δx alters capacitance C = εA/d → output voltage', WA / 2, 464);
+
+        // Step Peak Detection Algorithm
+        if (t - lastStepTime > 0.35 && mag > 2.0 && accelMode !== 'idle') {
+            if (accelMode !== 'gesture') {
+                stepCount++;
+                document.getElementById('stepCounterDisplay').textContent = stepCount.toString().padStart(5, '0');
+            }
+            lastStepTime = t;
+        }
+
+        // Buffer update for mini graph
+        accelWaveBuffer.shift();
+        accelWaveBuffer.push(mag);
+    }
+
+    // Mini Wave Graph in Sidebar
+    const miniAccelCanvas = document.getElementById('mini-accel-wave');
+    const miniAccelCtx = miniAccelCanvas.getContext('2d');
+    function renderMiniAccelGraph() {
+        const w = miniAccelCanvas.width, h = miniAccelCanvas.height;
+        miniAccelCtx.fillStyle = '#ffffff';
+        miniAccelCtx.fillRect(0, 0, w, h);
+
+        // Threshold line
+        miniAccelCtx.strokeStyle = '#ff3b30'; miniAccelCtx.lineWidth = 1; miniAccelCtx.setLineDash([3, 3]);
+        miniAccelCtx.beginPath(); miniAccelCtx.moveTo(0, h * 0.45); miniAccelCtx.lineTo(w, h * 0.45); miniAccelCtx.stroke();
+        miniAccelCtx.setLineDash([]);
+
+        // Wave curve
+        miniAccelCtx.strokeStyle = '#1d1d1f'; miniAccelCtx.lineWidth = 1.8;
+        miniAccelCtx.beginPath();
+        for (let i = 0; i < accelWaveBuffer.length; i++) {
+            const x = (i / accelWaveBuffer.length) * w;
+            const y = h - (accelWaveBuffer[i] / 8.0) * h;
+            i === 0 ? miniAccelCtx.moveTo(x, y) : miniAccelCtx.lineTo(x, y);
+        }
+        miniAccelCtx.stroke();
     }
 
     /* ============================================================
-       PART 3: OPTICAL PPG VISUALIZER (MONOCHROME REFINED)
+       3. OPTICAL PPG STUDIO (HEMODYNAMIC SENSING & REFLECTION)
        ============================================================ */
-    const canvasPPG = document.getElementById('canvas-ppg');
-    const ctxP = canvasPPG.getContext('2d');
-    const WP = 800, HP = 450;
-    let ppgSceneIndex = 0;
+    const canvasP = document.getElementById('canvas-ppg');
+    const ctxP = canvasP.getContext('2d');
+    const WP = 760, HP = 500;
 
-    const gPPGStream = new Array(180).fill(0);
+    let targetBPM = 75;
+    const ppgWaveBuffer = new Array(140).fill(0);
 
-    function ppgCurve(phase) {
+    function setBPM(bpm) {
+        targetBPM = bpm;
+        document.querySelectorAll('#sec-ppg .btn-mode').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+
+        document.getElementById('bpmDisplay').innerHTML = `${bpm} <span style="font-size: 16px; font-weight: 600; color: #86868b;">BPM</span>`;
+        const dt = (60 / bpm).toFixed(2);
+        document.getElementById('ppgDeltaTText').textContent = `Cardiac period: Δt = ${dt} s`;
+    }
+
+    function ppgWaveformFormula(phase) {
         phase = ((phase % 1) + 1) % 1;
         if (phase < 0.08) return phase / 0.08;
-        if (phase < 0.14) return 1 - (phase - 0.08) / 0.06 * 0.5;
-        if (phase < 0.28) return 0.5 - (phase - 0.14) / 0.14 * 0.15;
-        if (phase < 0.34) return 0.35 + (phase - 0.28) / 0.06 * 0.1;
-        return 0.45 * Math.max(0, 1 - (phase - 0.34) / 0.66);
+        if (phase < 0.14) return 1 - (phase - 0.08) / 0.06 * 0.45;
+        if (phase < 0.28) return 0.55 - (phase - 0.14) / 0.14 * 0.15;
+        if (phase < 0.35) return 0.40 + (phase - 0.28) / 0.07 * 0.12; // Dicrotic Notch
+        return 0.52 * Math.max(0, 1 - (phase - 0.35) / 0.65);
     }
 
-    const ppgScenesData = [
-        {
-            title: "Scene 1 — Optical Sensor Activation",
-            name: "Emitter & Detector Array on Rear Ceramic Plate",
-            desc: "The rear case of the watch rests against your skin. Dual green LEDs (wavelength ~530 nm) fire photons into tissue, while a centrally mounted silicon photodiode measures the flux of scattered light.",
-            render(t) {
-                // Background
-                ctxP.fillStyle = '#000'; ctxP.fillRect(0, 0, WP, HP);
-
-                // Circular rear casing
-                const cx = 400, cy = 200, r = 120;
-                ctxP.beginPath(); ctxP.arc(cx, cy, r + 20, 0, Math.PI * 2);
-                ctxP.fillStyle = '#0a0a0a'; ctxP.fill();
-                ctxP.strokeStyle = '#222'; ctxP.lineWidth = 2; ctxP.stroke();
-
-                ctxP.beginPath(); ctxP.arc(cx, cy, r, 0, Math.PI * 2);
-                ctxP.fillStyle = '#111'; ctxP.fill();
-
-                // 4 Green LEDs
-                const leds = [{x: cx - 40, y: cy}, {x: cx + 40, y: cy}, {x: cx, y: cy - 40}, {x: cx, y: cy + 40}];
-                const pulse = 0.5 + 0.5 * Math.sin(t * 6);
-
-                leds.forEach(p => {
-                    ctxP.beginPath(); ctxP.arc(p.x, p.y, 16, 0, Math.PI * 2);
-                    ctxP.fillStyle = `rgba(0, 255, 136, ${pulse * 0.18})`; ctxP.fill();
-
-                    ctxP.beginPath(); ctxP.arc(p.x, p.y, 7, 0, Math.PI * 2);
-                    ctxP.fillStyle = `rgba(0, 255, 136, ${0.4 + pulse * 0.6})`; ctxP.fill();
-                    ctxP.strokeStyle = '#fff'; ctxP.lineWidth = 1; ctxP.stroke();
-                });
-
-                // Photodiode
-                ctxP.beginPath(); ctxP.arc(cx, cy, 14, 0, Math.PI * 2);
-                ctxP.fillStyle = '#1f1f1f'; ctxP.fill();
-                ctxP.strokeStyle = '#ffffff'; ctxP.lineWidth = 1.5; ctxP.stroke();
-
-                // Annotations
-                ctxP.fillStyle = '#ffffff'; ctxP.font = '11px monospace'; ctxP.textAlign = 'center';
-                ctxP.fillText('CENTRAL PHOTODIODE', cx, cy + 32);
-                ctxP.fillStyle = '#888';
-                ctxP.fillText('HIGH-EFFICIENCY GREEN LEDs (λ ≈ 530nm)', cx, cy - 80);
-
-                ctxP.fillStyle = '#555'; ctxP.font = '11px monospace';
-                ctxP.fillText('Emitted green photons penetrate the epidermal stratum into capillary vascular beds', cx, 390);
-            }
-        },
-        {
-            title: "Scene 2 — Subcutaneous Light Penetration",
-            name: "Optical Interaction with Tissue Layers",
-            desc: "Green light enters the epidermis and dermis. As it interacts with cellular structures, a fraction of photons is scattered back toward the photodiode. Hemoglobin inside red blood cells acts as a strong absorber of green wavelengths.",
-            render(t) {
-                // Watch housing on top
-                ctxP.fillStyle = '#111'; ctxP.fillRect(200, 30, 400, 30);
-                ctxP.strokeStyle = '#333'; ctxP.strokeRect(200, 30, 400, 30);
-
-                // LED emitters
-                ctxP.fillStyle = '#00ff88';
-                ctxP.fillRect(290, 56, 16, 6);
-                ctxP.fillRect(494, 56, 16, 6);
-                // Photodiode
-                ctxP.fillStyle = '#ffffff';
-                ctxP.fillRect(392, 56, 16, 6);
-
-                ctxP.fillStyle = '#888'; ctxP.font = '10px monospace'; ctxP.textAlign = 'center';
-                ctxP.fillText('LED', 298, 48); ctxP.fillText('DETECTOR', 400, 48); ctxP.fillText('LED', 502, 48);
-
-                // Tissue strata
-                const ty = 70;
-                // Epidermis
-                ctxP.fillStyle = '#151515'; ctxP.fillRect(150, ty, 500, 40);
-                ctxP.fillStyle = '#666'; ctxP.font = '10px monospace'; ctxP.textAlign = 'left';
-                ctxP.fillText('EPIDERMIS (0.1 mm)', 160, ty + 24);
-
-                // Dermis
-                ctxP.fillStyle = '#1c1c1c'; ctxP.fillRect(150, ty + 40, 500, 160);
-                ctxP.fillStyle = '#666'; ctxP.fillText('DERMIS (Capillary Microvascular Beds)', 160, ty + 65);
-
-                // Blood Vessel in Dermis
-                const vy = ty + 95;
-                ctxP.fillStyle = '#2a1111';
-                rrectA(ctxP, 250, vy, 300, 50, 25); ctxP.fill();
-
-                // RBC particles flowing
-                ctxP.fillStyle = '#aa2222';
-                for (let i = 0; i < 9; i++) {
-                    const rx = 270 + ((i * 32 + t * 40) % 260);
-                    const ry = vy + 25 + Math.sin(i + t) * 6;
-                    ctxP.beginPath(); ctxP.ellipse(rx, ry, 6, 4, 0, 0, Math.PI * 2); ctxP.fill();
-                }
-
-                // Subcutaneous
-                ctxP.fillStyle = '#0d0d0d'; ctxP.fillRect(150, ty + 200, 500, 60);
-                ctxP.fillStyle = '#444'; ctxP.fillText('SUBCUTANEOUS TISSUE & ARTERIOLES', 160, ty + 230);
-
-                // Photons ray casting
-                ctxP.strokeStyle = 'rgba(0, 255, 136, 0.35)'; ctxP.lineWidth = 1.5;
-                for (let a = -2; a <= 2; a++) {
-                    ctxP.beginPath(); ctxP.moveTo(298, 62); ctxP.lineTo(298 + a * 25, vy + 20); ctxP.stroke();
-                    ctxP.beginPath(); ctxP.moveTo(502, 62); ctxP.lineTo(502 + a * 25, vy + 20); ctxP.stroke();
-                }
-
-                // Reflected photons back to photodiode
-                ctxP.strokeStyle = 'rgba(255, 255, 255, 0.35)'; ctxP.setLineDash([3, 3]);
-                ctxP.beginPath(); ctxP.moveTo(350, vy + 10); ctxP.lineTo(400, 62); ctxP.stroke();
-                ctxP.beginPath(); ctxP.moveTo(450, vy + 10); ctxP.lineTo(400, 62); ctxP.stroke();
-                ctxP.setLineDash([]);
-
-                ctxP.fillStyle = '#888'; ctxP.font = '11px monospace'; ctxP.textAlign = 'center';
-                ctxP.fillText('Green photons scatter through tissue; hemoglobin absorbs light proportionally to volume', WP / 2, 390);
-            }
-        },
-        {
-            title: "Scene 3 — Cardiac Contraction & Pulse Waves",
-            name: "Systole vs. Diastole Hemodynamics",
-            desc: "With each ventricular contraction (systole), a pulse wave surges through the vascular tree. Arteries and capillaries expand temporarily. During diastole, vessels relax to baseline caliber. This cyclical dilation modulates blood volume.",
-            render(t) {
-                const pulseT = Math.sin(t * 5);
-                const isSystole = pulseT > 0;
-                const expansion = Math.max(0, pulseT) * 18;
-
-                // Left: Anatomical Vessel Cross Section
-                const vx = 180, vy = 150, vw = 440, vh = 50 + expansion;
-                ctxP.fillStyle = '#0d0d0d'; ctxP.strokeStyle = '#222';
-                rrectA(ctxP, 120, 80, 560, 220, 10); ctxP.fill(); ctxP.stroke();
-
-                ctxP.fillStyle = '#888'; ctxP.font = '11px monospace'; ctxP.textAlign = 'center';
-                ctxP.fillText(isSystole ? 'STATE: SYSTOLIC BLOOD SURGE (VESSEL EXPANDS)' : 'STATE: DIASTOLIC RELAXATION (VESSEL CONTRACTS)', WP / 2, 110);
-
-                // Vessel
-                ctxP.fillStyle = '#331111'; ctxP.strokeStyle = '#662222'; ctxP.lineWidth = 2;
-                rrectA(ctxP, vx, vy - expansion / 2, vw, vh, vh / 2); ctxP.fill(); ctxP.stroke();
-
-                // RBCs density
-                const count = isSystole ? 22 : 11;
-                ctxP.fillStyle = isSystole ? '#ff3333' : '#aa2222';
-                for (let i = 0; i < count; i++) {
-                    const cx = vx + 20 + ((i * 24 + t * 70) % (vw - 40));
-                    const cy = vy + vh / 2 - expansion / 2 + Math.sin(i * 1.5 + t) * (vh * 0.3);
-                    ctxP.beginPath(); ctxP.ellipse(cx, cy, 6, 3.5, 0, 0, Math.PI * 2); ctxP.fill();
-                }
-
-                // Telemetry metrics
-                ctxP.fillStyle = '#ffffff'; ctxP.font = 'bold 16px monospace';
-                ctxP.fillText(isSystole ? 'Blood Volume: MAX (High Optical Absorption)' : 'Blood Volume: BASELINE (Lower Absorption)', WP / 2, 340);
-
-                ctxP.fillStyle = '#666'; ctxP.font = '11px monospace';
-                ctxP.fillText('Periodic vessel caliber modulation is the physical root of photoplethysmography', WP / 2, 370);
-            }
-        },
-        {
-            title: "Scene 4 — Modulation of Backscattered Light",
-            name: "Inverse Relationship: Blood Volume vs. Reflected Light",
-            desc: "The photodiode cannot see blood directly. It measures backscattered intensity. When blood volume peaks during systole, more green light is absorbed, causing reflected intensity to drop. When blood volume decreases, reflected light intensity peaks.",
-            render(t) {
-                // Two comparison panels
-                const pw = 280, ph = 260, y = 80;
-
-                function drawPanel(x, isHighBlood, title) {
-                    ctxP.fillStyle = '#080808'; ctxP.strokeStyle = '#222';
-                    rrectA(ctxP, x, y, pw, ph, 8); ctxP.fill(); ctxP.stroke();
-
-                    ctxP.fillStyle = '#ffffff'; ctxP.font = 'bold 12px monospace'; ctxP.textAlign = 'center';
-                    ctxP.fillText(title, x + pw / 2, y + 26);
-
-                    // Emitter
-                    ctxP.fillStyle = '#00ff88'; ctxP.fillRect(x + 70, y + 45, 14, 6);
-                    ctxP.fillStyle = '#fff'; ctxP.fillRect(x + pw - 84, y + 45, 14, 6);
-
-                    // Vessel
-                    const vh2 = isHighBlood ? 48 : 22;
-                    ctxP.fillStyle = '#331111';
-                    rrectA(ctxP, x + 30, y + 130, pw - 60, vh2, vh2 / 2); ctxP.fill();
-
-                    // Reflection Ray
-                    ctxP.strokeStyle = isHighBlood ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.85)';
-                    ctxP.lineWidth = isHighBlood ? 1 : 2.5;
-                    ctxP.beginPath(); ctxP.moveTo(x + 77, y + 51); ctxP.lineTo(x + pw / 2, y + 130); ctxP.lineTo(x + pw - 77, y + 51); ctxP.stroke();
-
-                    ctxP.fillStyle = '#888'; ctxP.font = '11px monospace';
-                    ctxP.fillText(isHighBlood ? 'ABSORPTION: HIGH' : 'ABSORPTION: LOW', x + pw / 2, y + 210);
-                    ctxP.fillStyle = isHighBlood ? '#888' : '#ffffff';
-                    ctxP.fillText(isHighBlood ? 'Reflected Signal: LOW' : 'Reflected Signal: PEAK', x + pw / 2, y + 230);
-                }
-
-                drawPanel(100, true, 'SYSTOLE (Surge)');
-                drawPanel(420, false, 'DIASTOLE (Relax)');
-
-                ctxP.fillStyle = '#ffffff'; ctxP.font = '12px monospace'; ctxP.textAlign = 'center';
-                ctxP.fillText('Photodiode Output Voltage is inversely proportional to instantaneous blood volume', WP / 2, 385);
-            }
-        },
-        {
-            title: "Scene 5 — Analog Front-End (AFE) Signal Chain",
-            name: "Current-to-Voltage, Filtering & Digitization",
-            desc: "The photodiode produces micro-amperes of current. The Analog Front-End (AFE) converts this into voltage (TIA amplifier), filters out ambient optical noise and movement artifacts, and feeds an ADC (Analog-to-Digital Converter).",
-            render(t) {
-                const stages = [
-                    { name: "Photodiode", desc: "Light → Current (μA)" },
-                    { name: "Transimpedance Amp", desc: "Current → Voltage" },
-                    { name: "Bandpass Filter", desc: "0.5–4.0 Hz Passband" },
-                    { name: "ADC Digitizer", desc: "16-Bit Resolution" },
-                    { name: "Processor", desc: "DSP Algorithm" }
-                ];
-
-                const sw = 110, sh = 80, sy = 90;
-                stages.forEach((st, idx) => {
-                    const sx = 65 + idx * 135;
-                    ctxP.fillStyle = '#0d0d0d'; ctxP.strokeStyle = idx === 4 ? '#ffffff' : '#333';
-                    rrectA(ctxP, sx, sy, sw, sh, 6); ctxP.fill(); ctxP.stroke();
-
-                    ctxP.fillStyle = '#ffffff'; ctxP.font = '10px monospace'; ctxP.textAlign = 'center';
-                    ctxP.fillText(st.name, sx + sw / 2, sy + 32);
-                    ctxP.fillStyle = '#888'; ctxP.font = '9px sans-serif';
-                    ctxP.fillText(st.desc, sx + sw / 2, sy + 54);
-
-                    if (idx < 4) {
-                        ctxP.strokeStyle = '#555'; ctxP.lineWidth = 1.5;
-                        ctxP.beginPath(); ctxP.moveTo(sx + sw + 2, sy + sh / 2); ctxP.lineTo(sx + sw + 23, sy + sh / 2); ctxP.stroke();
-                    }
-                });
-
-                // Clean Filtered PPG Waveform Display
-                if (!this._lastT || t - this._lastT > 0.03) {
-                    this._lastT = t;
-                    gPPGStream.shift();
-                    gPPGStream.push(ppgCurve((t * 1.1) % 1));
-                }
-
-                const gx = 65, gy = 205, gw = 670, gh = 135;
-                ctxP.fillStyle = '#080808'; ctxP.fillRect(gx, gy, gw, gh);
-                ctxP.strokeStyle = '#222'; ctxP.strokeRect(gx, gy, gw, gh);
-
-                ctxP.strokeStyle = '#ffffff'; ctxP.lineWidth = 2;
-                ctxP.beginPath();
-                for (let i = 0; i < gPPGStream.length; i++) {
-                    const px = gx + (i / gPPGStream.length) * gw;
-                    const py = gy + gh * 0.8 - gPPGStream[i] * gh * 0.65;
-                    i === 0 ? ctxP.moveTo(px, py) : ctxP.lineTo(px, py);
-                }
-                ctxP.stroke();
-
-                ctxP.fillStyle = '#888'; ctxP.font = '11px monospace'; ctxP.textAlign = 'left';
-                ctxP.fillText('CONDITIONED BIOMEDICAL PPG SIGNAL (ADC RAW)', gx + 12, gy + 20);
-
-                ctxP.fillStyle = '#666'; ctxP.font = '11px monospace'; ctxP.textAlign = 'center';
-                ctxP.fillText('Bandpass filtering eliminates motion baseline wandering and high-frequency noise', WP / 2, 385);
-            }
-        },
-        {
-            title: "Scene 6 — Anatomical PPG Waveform",
-            name: "Systolic Peak, Dicrotic Notch & Interval Δt",
-            desc: "The clean PPG pulse shows distinct anatomical features: a sharp systolic peak from ventricular ejection, followed by the dicrotic notch created when the aortic valve abruptly closes. The time between consecutive peaks represents one cardiac period $\\Delta t$.",
-            render(t) {
-                const gx = 80, gy = 60, gw = 640, gh = 230;
-                ctxP.fillStyle = '#080808'; ctxP.fillRect(gx, gy, gw, gh);
-                ctxP.strokeStyle = '#222'; ctxP.strokeRect(gx, gy, gw, gh);
-
-                // Waveform rendering across 2 complete cycles
-                ctxP.strokeStyle = '#ffffff'; ctxP.lineWidth = 2;
-                ctxP.beginPath();
-                const peaks = [];
-                for (let px = 0; px < gw; px++) {
-                    const phase = ((px / gw) * 2.2 + t * 0.5) % 1;
-                    const val = ppgCurve(phase);
-                    const py = gy + gh * 0.82 - val * gh * 0.65;
-                    px === 0 ? ctxP.moveTo(gx + px, py) : ctxP.lineTo(gx + px, py);
-
-                    if (val > 0.96 && (peaks.length === 0 || px - peaks[peaks.length - 1].px > 80)) {
-                        peaks.push({px, py});
-                    }
-                }
-                ctxP.stroke();
-
-                // Highlight peaks
-                peaks.forEach(p => {
-                    ctxP.fillStyle = '#ffffff';
-                    ctxP.beginPath(); ctxP.arc(gx + p.px, p.py, 5, 0, Math.PI * 2); ctxP.fill();
-                    ctxP.fillStyle = '#888'; ctxP.font = '10px monospace'; ctxP.textAlign = 'center';
-                    ctxP.fillText('PEAK', gx + p.px, p.py - 10);
-                });
-
-                // Show interval delta T
-                if (peaks.length >= 2) {
-                    const p1 = peaks[0], p2 = peaks[1];
-                    const iy = gy + gh - 20;
-                    ctxP.strokeStyle = '#888'; ctxP.lineWidth = 1; ctxP.setLineDash([4, 4]);
-                    ctxP.beginPath(); ctxP.moveTo(gx + p1.px, p1.py); ctxP.lineTo(gx + p1.px, iy); ctxP.stroke();
-                    ctxP.beginPath(); ctxP.moveTo(gx + p2.px, p2.py); ctxP.lineTo(gx + p2.px, iy); ctxP.stroke();
-                    ctxP.setLineDash([]);
-
-                    ctxP.beginPath(); ctxP.moveTo(gx + p1.px, iy); ctxP.lineTo(gx + p2.px, iy); ctxP.stroke();
-                    ctxP.fillStyle = '#ffffff'; ctxP.font = 'bold 12px monospace';
-                    ctxP.fillText('Δt ≈ 0.833 s (Interval Between Beats)', gx + (p1.px + p2.px) / 2, iy - 6);
-                }
-
-                // Waveform anatomy labels
-                ctxP.fillStyle = '#666'; ctxP.font = '11px monospace'; ctxP.textAlign = 'center';
-                ctxP.fillText('Systolic Peak (Ventricular Ejection)  |  Dicrotic Notch (Aortic Valve Closure)', WP / 2, 335);
-                ctxP.fillStyle = '#888';
-                ctxP.fillText('Cardiac Frequency Formula: Heart Rate (BPM) = 60 / Δt (seconds)', WP / 2, 370);
-            }
-        },
-        {
-            title: "Scene 7 — Heart Rate Computation & Display",
-            name: "Final Digital Telemetry (Beats Per Minute)",
-            desc: "With $\\Delta t = 0.833\\text{ s}$, the microprocessor evaluates: $60 / 0.833 = 72\\text{ BPM}$. The biometric is transmitted to the AMOLED display and logged in your daily health dashboard.",
-            render(t) {
-                // Calculation block
-                const bx = 160, by = 80, bw = 480, bh = 140;
-                ctxP.fillStyle = '#0a0a0a'; ctxP.strokeStyle = '#333';
-                rrectA(ctxP, bx, by, bw, bh, 8); ctxP.fill(); ctxP.stroke();
-
-                ctxP.fillStyle = '#888'; ctxP.font = '11px monospace'; ctxP.textAlign = 'center';
-                ctxP.fillText('MICROCONTROLLER DSP CALCULATION', WP / 2, by + 30);
-
-                ctxP.fillStyle = '#ffffff'; ctxP.font = 'bold 22px monospace';
-                ctxP.fillText('BPM = 60 / Δt = 60 / 0.833s = 72', WP / 2, by + 75);
-
-                ctxP.fillStyle = '#666'; ctxP.font = '11px sans-serif';
-                ctxP.fillText('Instantaneous Heart Rate Evaluated', WP / 2, by + 105);
-
-                // Watch face output
-                const wx = 330, wy = 240, ww = 140, wh = 120;
-                ctxP.fillStyle = '#050505'; ctxP.strokeStyle = '#ffffff'; ctxP.lineWidth = 1.5;
-                rrectA(ctxP, wx, wy, ww, wh, 12); ctxP.fill(); ctxP.stroke();
-
-                // Heart icon pulsating
-                const hp = 0.7 + 0.3 * Math.sin(t * 5);
-                ctxP.fillStyle = `rgba(255, 255, 255, ${hp})`;
-                ctxP.font = '16px sans-serif'; ctxP.textAlign = 'center';
-                ctxP.fillText('♥', wx + ww / 2, wy + 32);
-
-                ctxP.fillStyle = '#ffffff'; ctxP.font = 'bold 36px monospace';
-                ctxP.fillText('72', wx + ww / 2, wy + 76);
-
-                ctxP.fillStyle = '#888'; ctxP.font = '11px monospace';
-                ctxP.fillText('BPM', wx + ww / 2, wy + 98);
-
-                ctxP.fillStyle = '#555'; ctxP.font = '11px monospace';
-                ctxP.fillText('Complete chain: Blood volume modulation → Photodiode signal → DSP peak interval → Real-time BPM', WP / 2, 400);
-            }
-        }
-    ];
-
-    function updatePPGUI() {
-        const sc = ppgScenesData[ppgSceneIndex];
-        document.getElementById('ppg-step-title').textContent = sc.title;
-        document.getElementById('ppg-indicator').textContent = (ppgSceneIndex + 1) + ' / ' + ppgScenesData.length;
-        document.getElementById('ppg-scene-name').textContent = sc.name;
-        document.getElementById('ppg-scene-desc').textContent = sc.desc;
-        document.getElementById('ppg-prev').disabled = (ppgSceneIndex === 0);
-        document.getElementById('ppg-next').disabled = (ppgSceneIndex === ppgScenesData.length - 1);
-
-        const pills = document.getElementById('ppg-pills');
-        pills.innerHTML = '';
-        ppgScenesData.forEach((_, idx) => {
-            const p = document.createElement('div');
-            p.className = 'step-pill' + (idx === ppgSceneIndex ? ' active' : '');
-            p.onclick = () => { ppgSceneIndex = idx; updatePPGUI(); };
-            pills.appendChild(p);
-        });
-    }
-
-    function stepPPG(dir) {
-        ppgSceneIndex = Math.max(0, Math.min(ppgScenesData.length - 1, ppgSceneIndex + dir));
-        updatePPGUI();
-    }
-    updatePPGUI();
-
-    function renderPPG(time) {
-        ctxP.fillStyle = '#000000';
+    function renderPPGStudio(t) {
+        ctxP.fillStyle = '#ffffff';
         ctxP.fillRect(0, 0, WP, HP);
-        ppgScenesData[ppgSceneIndex].render(time);
+
+        // Grid
+        ctxP.strokeStyle = '#f2f2f7'; ctxP.lineWidth = 1;
+        for (let x = 0; x < WP; x += 30) { ctxP.beginPath(); ctxP.moveTo(x, 0); ctxP.lineTo(x, HP); ctxP.stroke(); }
+        for (let y = 0; y < HP; y += 30) { ctxP.beginPath(); ctxP.moveTo(0, y); ctxP.lineTo(WP, y); ctxP.stroke(); }
+
+        const period = 60 / targetBPM;
+        const phase = (t / period) % 1;
+        const ppgVal = ppgWaveformFormula(phase);
+
+        // In Systole: Blood volume is high
+        const isSystole = ppgVal > 0.6;
+        const vesselExpansion = ppgVal * 24;
+
+        // --- WATCH REAR CHASSIS (TOP) ---
+        ctxP.fillStyle = '#1d1d1f'; ctxP.strokeStyle = '#000000'; ctxP.lineWidth = 1.5;
+        ctxP.beginPath(); ctxP.roundRect(160, 20, 440, 48, 10); ctxP.fill(); ctxP.stroke();
+
+        ctxP.fillStyle = '#ffffff'; ctxP.font = 'bold 11px monospace'; ctxP.textAlign = 'center';
+        ctxP.fillText('SMARTWATCH REAR CERAMIC PLATE (RESTS ON SKIN)', WP / 2, 42);
+
+        // LED Emitters
+        const ledLeftX = 260, ledRightX = 500;
+        ctxP.fillStyle = '#00ff88';
+        ctxP.fillRect(ledLeftX - 10, 68, 20, 8);
+        ctxP.fillRect(ledRightX - 10, 68, 20, 8);
+
+        // Photodiode Detector (Center)
+        const pdX = WP / 2;
+        ctxP.fillStyle = '#111'; ctxP.strokeStyle = '#d2d2d7'; ctxP.lineWidth = 1;
+        ctxP.fillRect(pdX - 16, 68, 32, 8); ctxP.strokeRect(pdX - 16, 68, 32, 8);
+
+        ctxP.fillStyle = '#00875a'; ctxP.font = '10px monospace';
+        ctxP.fillText('GREEN LED', ledLeftX, 62);
+        ctxP.fillText('GREEN LED', ledRightX, 62);
+        ctxP.fillStyle = '#1d1d1f';
+        ctxP.fillText('PHOTODIODE', pdX, 62);
+
+        // --- SKIN TISSUE LAYERS ---
+        const skinY = 82;
+        // Epidermis
+        ctxP.fillStyle = '#f7eedd'; ctxP.fillRect(100, skinY, 560, 35);
+        ctxP.fillStyle = '#86868b'; ctxP.font = '10px monospace'; ctxP.textAlign = 'left';
+        ctxP.fillText('EPIDERMIS (0.1 mm)', 110, skinY + 22);
+
+        // Dermis
+        ctxP.fillStyle = '#eddac2'; ctxP.fillRect(100, skinY + 35, 560, 210);
+        ctxP.fillStyle = '#86868b';
+        ctxP.fillText('DERMIS (Capillary Microvascular Beds)', 110, skinY + 60);
+
+        // Subcutaneous
+        ctxP.fillStyle = '#e5ceb0'; ctxP.fillRect(100, skinY + 245, 560, 60);
+        ctxP.fillStyle = '#86868b';
+        ctxP.fillText('SUBCUTANEOUS TISSUE', 110, skinY + 275);
+
+        // --- PULSATING ARTERY CROSS-SECTION ---
+        const vy = skinY + 120;
+        const baseH = 40;
+        const currH = baseH + vesselExpansion;
+
+        ctxP.fillStyle = '#b71c1c';
+        ctxP.beginPath(); ctxP.roundRect(180, vy - currH / 2, 400, currH, currH / 2); ctxP.fill();
+
+        // Red blood cells flow
+        ctxP.fillStyle = '#ff4d4f';
+        for (let i = 0; i < 18; i++) {
+            const rx = 200 + ((i * 24 + t * 60) % 360);
+            const ry = vy + Math.sin(i * 1.6 + t * 2) * (currH * 0.28);
+            ctxP.beginPath(); ctxP.ellipse(rx, ry, 6, 3.5, 0, 0, Math.PI * 2); ctxP.fill();
+        }
+
+        // --- EMITTED GREEN LIGHT BEAMS (DOWNWARD) ---
+        ctxP.save();
+        ctxP.fillStyle = 'rgba(0, 255, 136, 0.25)';
+        ctxP.strokeStyle = 'rgba(0, 200, 100, 0.7)';
+        ctxP.lineWidth = 1.5;
+
+        // Cone from Left LED
+        ctxP.beginPath();
+        ctxP.moveTo(ledLeftX, 76);
+        ctxP.lineTo(ledLeftX - 35, vy);
+        ctxP.lineTo(ledLeftX + 45, vy);
+        ctxP.closePath();
+        ctxP.fill(); ctxP.stroke();
+
+        // Cone from Right LED
+        ctxP.beginPath();
+        ctxP.moveTo(ledRightX, 76);
+        ctxP.lineTo(ledRightX - 45, vy);
+        ctxP.lineTo(ledRightX + 35, vy);
+        ctxP.closePath();
+        ctxP.fill(); ctxP.stroke();
+        ctxP.restore();
+
+        // --- THE CRUCIAL VISUAL: REFLECTED LIGHT RETURNING TO PHOTODIODE ---
+        // During Systole (high blood): Hemoglobin absorbs light -> reflected beam is WEAK & DIM!
+        // During Diastole (low blood): Less absorption -> reflected beam is STRONG & BRIGHT!
+        const reflectedIntensity = (1.0 - ppgVal * 0.75); // Inversely proportional!
+        const beamAlpha = 0.15 + reflectedIntensity * 0.75;
+        const beamWidth = 2 + reflectedIntensity * 4;
+
+        ctxP.save();
+        ctxP.strokeStyle = `rgba(0, 255, 136, ${beamAlpha})`;
+        ctxP.lineWidth = beamWidth;
+        ctxP.setLineDash([4, 4]);
+
+        // Reflected rays bouncing up from vessel to central photodiode
+        ctxP.beginPath(); ctxP.moveTo(ledLeftX + 30, vy - currH / 2); ctxP.lineTo(pdX - 4, 76); ctxP.stroke();
+        ctxP.beginPath(); ctxP.moveTo(ledRightX - 30, vy - currH / 2); ctxP.lineTo(pdX + 4, 76); ctxP.stroke();
+        ctxP.setLineDash([]);
+        ctxP.restore();
+
+        // Label on the reflected beam
+        ctxP.fillStyle = isSystole ? '#d70015' : '#00875a';
+        ctxP.font = 'bold 11px monospace'; ctxP.textAlign = 'center';
+        if (isSystole) {
+            ctxP.fillText('SYSTOLE: High Blood Volume → Maximum Light Absorbed → REFLECTION DROPS', WP / 2, vy - currH / 2 - 25);
+        } else {
+            ctxP.fillText('DIASTOLE: Low Blood Volume → Less Absorption → REFLECTION PEAKS', WP / 2, vy - currH / 2 - 25);
+        }
+
+        // Photodiode Voltage Meter Banner
+        ctxP.fillStyle = '#ffffff'; ctxP.strokeStyle = '#e5e5ea'; ctxP.lineWidth = 1;
+        ctxP.beginPath(); ctxP.roundRect(140, 420, 480, 56, 12); ctxP.fill(); ctxP.stroke();
+
+        ctxP.fillStyle = '#1d1d1f'; ctxP.font = 'bold 15px monospace'; ctxP.textAlign = 'center';
+        ctxP.fillText(`Reflected Optical Signal: ${(reflectedIntensity * 100).toFixed(0)}% Intensity`, WP / 2, 444);
+
+        ctxP.fillStyle = '#6e6e73'; ctxP.font = '11px sans-serif';
+        ctxP.fillText('Photodiode detects cyclic reflection dip → DSP calculates heart rate (BPM)', WP / 2, 464);
+
+        // Update mini PPG wave buffer
+        ppgWaveBuffer.shift();
+        ppgWaveBuffer.push(ppgVal);
+    }
+
+    // Mini Wave Graph in PPG Sidebar
+    const miniPPGCanvas = document.getElementById('mini-ppg-wave');
+    const miniPPGCtx = miniPPGCanvas.getContext('2d');
+    function renderMiniPPGGraph() {
+        const w = miniPPGCanvas.width, h = miniPPGCanvas.height;
+        miniPPGCtx.fillStyle = '#ffffff';
+        miniPPGCtx.fillRect(0, 0, w, h);
+
+        // Wave line
+        miniPPGCtx.strokeStyle = '#00875a'; miniPPGCtx.lineWidth = 2;
+        miniPPGCtx.beginPath();
+        for (let i = 0; i < ppgWaveBuffer.length; i++) {
+            const x = (i / ppgWaveBuffer.length) * w;
+            const y = h * 0.85 - ppgWaveBuffer[i] * (h * 0.7);
+            i === 0 ? miniPPGCtx.moveTo(x, y) : miniPPGCtx.lineTo(x, y);
+        }
+        miniPPGCtx.stroke();
     }
 
     /* ============================================================
-       PART 4: UNIFIED ANIMATION ENGINE LOOP
+       4. MASTER ANIMATION LOOP
        ============================================================ */
     function masterLoop(timestamp) {
-        const time = timestamp / 1000;
-        renderAccel(time);
-        renderPPG(time);
+        const t = timestamp / 1000;
+        renderAccelStudio(t);
+        renderMiniAccelGraph();
+
+        renderPPGStudio(t);
+        renderMiniPPGGraph();
+
         requestAnimationFrame(masterLoop);
     }
     requestAnimationFrame(masterLoop);
